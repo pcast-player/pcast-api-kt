@@ -1,10 +1,12 @@
 package io.pcast.model
 
+import io.pcast.helpers.generateUuidV7
 import io.pcast.result.Result
 import java.time.LocalDateTime
 import java.util.UUID
 
 private fun createFakeFeed(i: Int) = Feed(
+    id = generateUuidV7(),
     title = "Feed $i",
     url = "https://rss.pcast.io/news$i.rss",
     synchronizedAt = LocalDateTime.now().minusDays(i.toLong())

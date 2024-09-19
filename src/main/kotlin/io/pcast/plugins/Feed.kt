@@ -7,11 +7,15 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import io.pcast.model.FeedRepository
+import io.pcast.request.FeedRequest
+import io.pcast.response.FeedResponse
 import io.pcast.result.Result
 import io.pcast.result.isOk
 import io.pcast.result.toResult
@@ -27,7 +31,7 @@ fun Application.configureFeed(repository: FeedRepository) {
 
     routing {
         get("/api/feeds") {
-            call.respond(repository.findAll())
+            call.respond(repository.findAll().map(::FeedResponse))
         }
 
         get("/api/feeds/{id}") {
@@ -38,13 +42,26 @@ fun Application.configureFeed(repository: FeedRepository) {
                 val feedResult = repository.find(id)
 
                 if (feedResult.isOk()) {
-                    call.respond(feedResult.value)
+                    val response = FeedResponse(feedResult.value)
+
+                    call.respond(response)
                 } else {
                     call.respond(HttpStatusCode.NotFound)
                 }
             } else {
                 call.respond(HttpStatusCode.BadRequest)
             }
+        }
+
+        post("/api/feeds") {
+            val request = call.receive<FeedRequest>()
+            val feed = request.toFeed()
+
+            repository.save(feed)
+
+            val response = FeedResponse(feed)
+
+            call.respond(HttpStatusCode.Created, response)
         }
     }
 }

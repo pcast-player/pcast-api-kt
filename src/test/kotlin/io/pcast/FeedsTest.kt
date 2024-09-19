@@ -5,15 +5,22 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.pcast.model.FakeFeedRepository
-import io.pcast.model.Feed
 import io.pcast.plugins.configureFeed
+import io.pcast.request.FeedRequest
+import io.pcast.response.FeedResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 private val FEEDS = FakeFeedRepository()
 
@@ -24,7 +31,7 @@ internal class FeedsTest {
 
         client.get("/api/feeds").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(FEEDS.findAll(), body<List<Feed>>())
+            assertEquals(FEEDS.findAll().map(::FeedResponse), body<List<FeedResponse>>())
         }
     }
 
@@ -32,10 +39,11 @@ internal class FeedsTest {
     fun testGetFeed() = testApplication {
         val client = configureServerAndGetClient()
         val feed = FEEDS.findAll().first()
+        val response = FeedResponse(feed)
 
         client.get("/api/feeds/${feed.id}").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(feed, body<Feed>())
+            assertEquals(response, body<FeedResponse>())
         }
     }
 
@@ -55,6 +63,26 @@ internal class FeedsTest {
 
         client.get("/api/feeds/fdsfsdf").apply {
             assertEquals(HttpStatusCode.BadRequest, status)
+        }
+    }
+
+    @Test
+    fun testCreateFeed() = testApplication {
+        val title = "title"
+        val url = "https://foo.bar"
+        val client = configureServerAndGetClient()
+
+        client.post("/api/feeds") {
+            header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            setBody(FeedRequest(title, url))
+        }.apply {
+            assertEquals(HttpStatusCode.Created, status)
+
+            val response = body<FeedResponse>()
+
+            assertEquals(title, response.title)
+            assertEquals(url, response.url)
+            assertNull(response.synchronizedAt)
         }
     }
 
