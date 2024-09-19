@@ -14,10 +14,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.model.FakeFeedRepository
-import io.pcast.plugins.configureFeed
-import io.pcast.request.FeedRequest
-import io.pcast.response.FeedResponse
+import io.pcast.model.feed.FakeFeedRepository
+import io.pcast.controller.feed.createFeedHandler
+import io.pcast.controller.feed.FeedRequest
+import io.pcast.controller.feed.FeedResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -88,7 +88,7 @@ internal class FeedsTest {
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
-            configureFeed(FEEDS)
+            createFeedHandler(FEEDS)
         }
 
         return createClient {

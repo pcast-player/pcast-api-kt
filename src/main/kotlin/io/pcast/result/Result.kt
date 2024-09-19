@@ -61,7 +61,7 @@ infix fun <V : Any?, E : Exception> Result<V, E>.or(
     fallback: V
 ) = if (isOk()) value else fallback
 
-infix fun <V : Any?, E : Exception> Result<V, E>.or(
+inline infix fun <V : Any?, E : Exception> Result<V, E>.or(
     callback: (E) -> V
 ) = if (isOk()) value else callback(error)
 

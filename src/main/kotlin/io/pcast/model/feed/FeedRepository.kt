@@ -1,4 +1,4 @@
-package io.pcast.model
+package io.pcast.model.feed
 
 import io.pcast.result.Result
 import java.util.UUID

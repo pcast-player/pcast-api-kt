@@ -1,4 +1,4 @@
-package io.pcast.model
+package io.pcast.model.feed
 
 import io.pcast.helpers.generateUuidV7
 import io.pcast.result.Result

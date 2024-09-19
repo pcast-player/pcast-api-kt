@@ -1,4 +1,4 @@
-package io.pcast.plugins
+package io.pcast.controller.feed
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -13,53 +13,42 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
-import io.pcast.model.FeedRepository
-import io.pcast.request.FeedRequest
-import io.pcast.response.FeedResponse
+import io.pcast.model.feed.FeedRepository
 import io.pcast.result.Result
 import io.pcast.result.isOk
+import io.pcast.result.or
 import io.pcast.result.toResult
 import java.util.UUID
 
 fun PipelineContext<Unit, ApplicationCall>.getId(): Result<UUID, Exception> =
     toResult { UUID.fromString(call.parameters["id"]) }
 
-fun Application.configureFeed(repository: FeedRepository) {
+fun Application.createFeedHandler(repository: FeedRepository) {
+    val handler = FeedHandler(repository)
+
     install(ContentNegotiation) {
         json()
     }
 
     routing {
         get("/api/feeds") {
-            call.respond(repository.findAll().map(::FeedResponse))
+            call.respond(handler.getFeeds())
         }
 
         get("/api/feeds/{id}") {
-            val idResult = getId()
+            val id = getId() or { return@get call.respond(HttpStatusCode.BadRequest) }
+            val feedResult = handler.getFeed(id)
 
-            if (idResult.isOk()) {
-                val (id) = idResult
-                val feedResult = repository.find(id)
-
-                if (feedResult.isOk()) {
-                    val response = FeedResponse(feedResult.value)
-
-                    call.respond(response)
-                } else {
-                    call.respond(HttpStatusCode.NotFound)
-                }
+            if (feedResult.isOk()) {
+                call.respond(feedResult.value)
             } else {
-                call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.NotFound)
             }
         }
 
         post("/api/feeds") {
             val request = call.receive<FeedRequest>()
-            val feed = request.toFeed()
-
-            repository.save(feed)
-
-            val response = FeedResponse(feed)
+            val response = handler.addFeed(request)
 
             call.respond(HttpStatusCode.Created, response)
         }

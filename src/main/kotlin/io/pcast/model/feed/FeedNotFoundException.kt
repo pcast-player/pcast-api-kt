@@ -1,3 +1,3 @@
-package io.pcast.model
+package io.pcast.model.feed
 
 class FeedNotFoundException : RuntimeException()

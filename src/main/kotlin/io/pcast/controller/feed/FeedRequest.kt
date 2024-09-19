@@ -1,7 +1,7 @@
-package io.pcast.request
+package io.pcast.controller.feed
 
 import io.pcast.helpers.generateUuidV7
-import io.pcast.model.Feed
+import io.pcast.model.feed.Feed
 import kotlinx.serialization.Serializable
 import java.util.UUID
 

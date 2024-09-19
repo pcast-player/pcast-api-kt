@@ -3,8 +3,8 @@ package io.pcast
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.pcast.model.FakeFeedRepository
-import io.pcast.plugins.configureFeed
+import io.pcast.controller.feed.createFeedHandler
+import io.pcast.model.feed.FakeFeedRepository
 import io.pcast.plugins.configureMonitoring
 
 private val FEEDS = FakeFeedRepository()
@@ -15,6 +15,6 @@ fun main() {
 }
 
 fun Application.module() {
-    configureFeed(FEEDS)
+    createFeedHandler(FEEDS)
     configureMonitoring()
 }
