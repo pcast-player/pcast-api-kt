@@ -29,4 +29,10 @@ class FeedHandler(
 
         return FeedResponse(feed)
     }
+
+    fun updateFeed(id: UUID, request: FeedRequest) {
+        val feed = request.toFeed(id)
+
+        repository.save(feed)
+    }
 }

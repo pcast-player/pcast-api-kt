@@ -7,6 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -83,6 +84,28 @@ internal class FeedsTest {
             assertEquals(title, response.title)
             assertEquals(url, response.url)
             assertNull(response.synchronizedAt)
+        }
+    }
+
+    @Test
+    fun testUpdateFeed() = testApplication {
+        val feed = FEEDS.findAll().first()
+        val newTitle = "new title"
+        val client = configureServerAndGetClient()
+
+        client.put("/api/feeds/${feed.id}") {
+            header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            setBody(FeedRequest(newTitle, feed.url))
+        }.apply {
+            assertEquals(HttpStatusCode.NoContent, status)
+        }
+
+        client.get("/api/feeds/${feed.id}").apply {
+            assertEquals(HttpStatusCode.OK, status)
+
+            val response = body<FeedResponse>()
+
+            assertEquals(newTitle, response.title)
         }
     }
 

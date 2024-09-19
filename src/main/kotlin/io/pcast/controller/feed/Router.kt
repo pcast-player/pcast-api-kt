@@ -11,6 +11,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import io.pcast.model.feed.FeedRepository
@@ -35,6 +36,13 @@ fun Application.createFeedHandler(repository: FeedRepository) {
             call.respond(handler.getFeeds())
         }
 
+        post("/api/feeds") {
+            val request = call.receive<FeedRequest>()
+            val response = handler.addFeed(request)
+
+            call.respond(HttpStatusCode.Created, response)
+        }
+
         get("/api/feeds/{id}") {
             val id = getId() or { return@get call.respond(HttpStatusCode.BadRequest) }
             val feedResult = handler.getFeed(id)
@@ -46,11 +54,13 @@ fun Application.createFeedHandler(repository: FeedRepository) {
             }
         }
 
-        post("/api/feeds") {
+        put("/api/feeds/{id}") {
+            val id = getId() or { return@put call.respond(HttpStatusCode.BadRequest) }
             val request = call.receive<FeedRequest>()
-            val response = handler.addFeed(request)
 
-            call.respond(HttpStatusCode.Created, response)
+            handler.updateFeed(id, request)
+
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
