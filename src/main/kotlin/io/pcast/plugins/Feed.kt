@@ -14,13 +14,11 @@ import io.ktor.util.pipeline.PipelineContext
 import io.pcast.model.FeedRepository
 import io.pcast.result.Result
 import io.pcast.result.isOk
+import io.pcast.result.toResult
+import java.util.UUID
 
-fun PipelineContext<Unit, ApplicationCall>.getIntParameter(name: String): Result<Int, Exception> {
-    val rawParam = call.parameters["id"] ?: return Result.error(Exception("Missing parameter $name"))
-    val param = rawParam.toIntOrNull() ?: return Result.error(Exception("Could not parse value '$rawParam' to Int"))
-
-    return Result.ok(param)
-}
+fun PipelineContext<Unit, ApplicationCall>.getId(): Result<UUID, Exception> =
+    toResult { UUID.fromString(call.parameters["id"]) }
 
 fun Application.configureFeed(repository: FeedRepository) {
     install(ContentNegotiation) {
@@ -33,7 +31,7 @@ fun Application.configureFeed(repository: FeedRepository) {
         }
 
         get("/api/feeds/{id}") {
-            val idResult = getIntParameter("id")
+            val idResult = getId()
 
             if (idResult.isOk()) {
                 val (id) = idResult

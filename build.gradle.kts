@@ -29,6 +29,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.ktor:ktor-client-content-negotiation:$kotlin_version")

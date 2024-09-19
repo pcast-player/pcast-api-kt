@@ -1,5 +1,6 @@
 package io.pcast
 
+import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -30,18 +31,20 @@ internal class FeedsTest {
     @Test
     fun testGetFeed() = testApplication {
         val client = configureServerAndGetClient()
+        val feed = FEEDS.findAll().first()
 
-        client.get("/api/feeds/1").apply {
+        client.get("/api/feeds/${feed.id}").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(FEEDS.find(1).get(), body<Feed>())
+            assertEquals(feed, body<Feed>())
         }
     }
 
     @Test
     fun testGetFeedFailsWithUnknownId() = testApplication {
         val client = configureServerAndGetClient()
+        val uuid = Generators.timeBasedGenerator().generate()
 
-        client.get("/api/feeds/2323").apply {
+        client.get("/api/feeds/$uuid").apply {
             assertEquals(HttpStatusCode.NotFound, status)
         }
     }
