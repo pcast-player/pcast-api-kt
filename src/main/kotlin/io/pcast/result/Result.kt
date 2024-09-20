@@ -76,7 +76,7 @@ fun <V : Any?, E : Exception> Result<V, E>.unwrap(): V = or { throw it }
 fun <V : Any?, E : Exception, R> Result<V, E>.unwrap(transform: (r: V) -> R): R =
     if (isOk()) transform(value) else throw error
 
-fun <T> toResult(callback: () -> T) = try {
+inline fun <T> attempt(callback: () -> T) = try {
     Result.ok(callback())
 } catch (e: Exception) {
     Result.error(e)

@@ -1,13 +1,13 @@
 package io.pcast
 
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.pcast.controller.feed.createFeedHandler
-import io.pcast.model.feed.FakeFeedRepository
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.pcast.plugins.configureMonitoring
-
-private val FEEDS = FakeFeedRepository()
+import io.pcast.plugins.configureRouting
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -15,6 +15,10 @@ fun main() {
 }
 
 fun Application.module() {
-    createFeedHandler(FEEDS)
+    install(ContentNegotiation) {
+        json()
+    }
+
+    configureRouting()
     configureMonitoring()
 }

@@ -3,7 +3,7 @@ package io.pcast
 import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -13,12 +13,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.install
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.model.feed.FakeFeedRepository
-import io.pcast.controller.feed.createFeedHandler
 import io.pcast.controller.feed.FeedRequest
 import io.pcast.controller.feed.FeedResponse
+import io.pcast.model.feed.FakeFeedRepository
+import io.pcast.plugins.configureRouting
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -63,7 +65,7 @@ internal class FeedsTest {
         val client = configureServerAndGetClient()
 
         client.get("/api/feeds/fdsfsdf").apply {
-            assertEquals(HttpStatusCode.BadRequest, status)
+            assertEquals(HttpStatusCode.NotFound, status)
         }
     }
 
@@ -111,11 +113,15 @@ internal class FeedsTest {
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
-            createFeedHandler(FEEDS)
+            install(ContentNegotiation) {
+                json()
+            }
+
+            configureRouting()
         }
 
         return createClient {
-            install(ContentNegotiation) {
+            install(ClientContentNegotiation) {
                 json()
             }
         }
