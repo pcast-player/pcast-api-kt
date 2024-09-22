@@ -21,6 +21,7 @@ import io.pcast.controller.feed.FeedRequest
 import io.pcast.controller.feed.FeedResponse
 import io.pcast.model.feed.FakeFeedRepository
 import io.pcast.plugins.configureRouting
+import io.pcast.result.unwrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -34,14 +35,14 @@ internal class FeedsTest {
 
         client.get("/api/feeds").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(FEEDS.findAll().map(::FeedResponse), body<List<FeedResponse>>())
+            assertEquals(FEEDS.findAll().unwrap(::FeedResponse), body<List<FeedResponse>>())
         }
     }
 
     @Test
     fun testGetFeed() = testApplication {
         val client = configureServerAndGetClient()
-        val feed = FEEDS.findAll().first()
+        val feed = FEEDS.findAll().unwrap().first()
         val response = FeedResponse(feed)
 
         client.get("/api/feeds/${feed.id}").apply {
@@ -91,7 +92,7 @@ internal class FeedsTest {
 
     @Test
     fun testUpdateFeed() = testApplication {
-        val feed = FEEDS.findAll().first()
+        val feed = FEEDS.findAll().unwrap().first()
         val newTitle = "new title"
         val client = configureServerAndGetClient()
 

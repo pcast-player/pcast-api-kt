@@ -19,11 +19,13 @@ private val FEEDS = buildMap {
 }.toMutableMap()
 
 class FakeFeedRepository : FeedRepository {
-    override fun save(feed: Feed) {
+    override fun save(feed: Feed): Result<Unit, Exception> {
         FEEDS[feed.id] = feed
+
+        return Result.ok()
     }
 
-    override fun findAll() = FEEDS.values.toList()
+    override fun findAll() = Result.ok(FEEDS.values.toList())
 
     override fun find(id: UUID): Result<Feed, Exception> {
         val feed = FEEDS[id]
@@ -35,7 +37,9 @@ class FakeFeedRepository : FeedRepository {
         }
     }
 
-    override fun delete(id: UUID) {
+    override fun delete(id: UUID): Result<Unit, Exception> {
         FEEDS.remove(id)
+
+        return Result.ok()
     }
 }

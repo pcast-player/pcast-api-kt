@@ -19,20 +19,33 @@ fun Route.registerFeedRoutes() {
     val handler = FeedHandler(repository)
 
     get("/feeds") {
-        call.respond(handler.getFeeds())
+        attempt {
+            val result = handler.getFeeds()
+            val feeds = result.unwrap(::FeedResponse)
+
+            call.respond(feeds)
+        } or {
+            call.respond(HttpStatusCode.NoContent)
+        }
     }
 
     post("/feeds") {
-        val request = call.receive<FeedRequest>()
-        val response = handler.addFeed(request)
+        attempt {
+            val request = call.receive<FeedRequest>()
+            val result = handler.addFeed(request)
+            val feed = result.unwrap(::FeedResponse)
 
-        call.respond(HttpStatusCode.Created, response)
+            call.respond(HttpStatusCode.Created, feed)
+        } or {
+            call.respond(HttpStatusCode.InternalServerError)
+        }
     }
 
     get("/feeds/{id}") {
         attempt {
             val id = UUID.fromString(call.parameters["id"])
-            val feed = handler.getFeed(id).unwrap()
+            val result = handler.getFeed(id)
+            val feed = result.unwrap(::FeedResponse)
 
             call.respond(feed)
         } or {
