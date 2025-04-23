@@ -1,5 +1,6 @@
 val kotlin_version: String by project
 val logback_version: String by project
+val ktor_version: String by project
 
 plugins {
     kotlin("jvm") version "2.1.20"
@@ -27,11 +28,11 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.2")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    testImplementation("io.ktor:ktor-client-content-negotiation:$kotlin_version")
+    testImplementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-server-call-logging")
 }
