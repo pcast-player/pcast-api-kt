@@ -1,5 +1,6 @@
 package io.pcast.model.feed
 
+import io.pcast.helpers.buildMutableMap
 import io.pcast.helpers.generateUuidV7
 import io.pcast.result.Result
 import java.time.LocalDateTime
@@ -12,11 +13,11 @@ private fun createFakeFeed(i: Int) = Feed(
     synchronizedAt = LocalDateTime.now().minusDays(i.toLong())
 )
 
-private val FEEDS = buildMap {
+private val FEEDS = buildMutableMap {
     for (i in 1..10) {
         createFakeFeed(i).also { put(it.id, it) }
     }
-}.toMutableMap()
+}
 
 class FakeFeedRepository : FeedRepository {
     override fun save(feed: Feed): Result<Unit, Exception> {
