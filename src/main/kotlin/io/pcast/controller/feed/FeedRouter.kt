@@ -1,21 +1,20 @@
 package io.pcast.controller.feed
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
-import io.pcast.model.feed.FakeFeedRepository
+import io.pcast.model.feed.FeedRepositoryFactory
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
 import java.util.UUID
 
 fun Route.registerFeedRoutes() {
-    val repository = FakeFeedRepository()
+    val repository = FeedRepositoryFactory.getRepository()
     val handler = FeedHandler(repository)
 
     get("/feeds") {

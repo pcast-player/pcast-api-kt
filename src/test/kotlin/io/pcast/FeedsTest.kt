@@ -20,6 +20,7 @@ import io.ktor.server.testing.testApplication
 import io.pcast.controller.feed.FeedRequest
 import io.pcast.controller.feed.FeedResponse
 import io.pcast.model.feed.FakeFeedRepository
+import io.pcast.model.feed.FeedRepositoryFactory
 import io.pcast.plugins.configureRouting
 import io.pcast.result.unwrap
 import kotlin.test.Test
@@ -29,6 +30,12 @@ import kotlin.test.assertNull
 private val FEEDS = FakeFeedRepository()
 
 internal class FeedsTest {
+    companion object {
+        init {
+            // Enable test mode to use FakeFeedRepository
+            FeedRepositoryFactory.enableTestMode()
+        }
+    }
     @Test
     fun testGetFeeds() = testApplication {
         val client = configureServerAndGetClient()
