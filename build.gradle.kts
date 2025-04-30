@@ -37,6 +37,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:0.48.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.48.0")
     implementation("org.jetbrains.exposed:exposed-java-time:0.48.0")
+    implementation("org.flywaydb:flyway-core:11.8.0")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:11.8.0")
     implementation("com.zaxxer:HikariCP:6.3.0")
     implementation("org.postgresql:postgresql:42.7.5")
     implementation("com.h2database:h2:2.2.224")
