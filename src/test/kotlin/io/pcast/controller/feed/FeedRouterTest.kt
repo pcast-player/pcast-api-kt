@@ -1,9 +1,8 @@
-package io.pcast
+package io.pcast.controller.feed
 
 import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -17,32 +16,46 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.controller.feed.FeedRequest
-import io.pcast.controller.feed.FeedResponse
-import io.pcast.model.feed.FakeFeedRepositoryImpl
+import io.pcast.helpers.generateUuidV7
+import io.pcast.model.feed.Feed
+import io.pcast.model.feed.FeedRepository
+import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureRouting
-import io.pcast.result.unwrap
+import io.pcast.plugins.configureTestDatabase
+import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
-private val FEEDS = FakeFeedRepositoryImpl()
+private val FEEDS = buildList {
+    for (i in 1..10) {
+        add(
+            Feed(
+                id = generateUuidV7(),
+                title = "Feed $i",
+                url = "https://rss.pcast.io/news$i.rss",
+                synchronizedAt = LocalDateTime.now().minusDays(i.toLong())
+            )
+        )
+    }
+}
 
-internal class FeedsTest {
+internal class FeedRouterTest {
     @Test
     fun testGetFeeds() = testApplication {
         val client = configureServerAndGetClient()
 
         client.get("/api/feeds").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(FEEDS.findAll().unwrap(::FeedResponse), body<List<FeedResponse>>())
+            assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
         }
     }
 
     @Test
     fun testGetFeed() = testApplication {
         val client = configureServerAndGetClient()
-        val feed = FEEDS.findAll().unwrap().first()
+        val feed = FEEDS.first()
         val response = FeedResponse(feed)
 
         client.get("/api/feeds/${feed.id}").apply {
@@ -92,7 +105,7 @@ internal class FeedsTest {
 
     @Test
     fun testUpdateFeed() = testApplication {
-        val feed = FEEDS.findAll().unwrap().first()
+        val feed = FEEDS.first()
         val newTitle = "new title"
         val client = configureServerAndGetClient()
 
@@ -118,13 +131,24 @@ internal class FeedsTest {
                 json()
             }
 
-            configureRouting(FEEDS)
+            val db = configureTestDatabase()
+            val feedRepository = FeedRepositoryImpl(db)
+
+            addTestData(feedRepository)
+
+            configureRouting(feedRepository)
         }
 
         return createClient {
             install(ClientContentNegotiation) {
                 json()
             }
+        }
+    }
+
+    private fun addTestData(feedRepository: FeedRepository) {
+        for (feed in FEEDS) {
+            feedRepository.save(feed)
         }
     }
 }

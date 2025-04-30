@@ -21,7 +21,7 @@ fun Application.module() {
         json()
     }
 
-    configureDatabase()
-    configureRouting(FeedRepositoryImpl())
+    val db = configureDatabase()
+    configureRouting(FeedRepositoryImpl(db))
     configureMonitoring()
 }

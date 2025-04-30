@@ -3,6 +3,7 @@ package io.pcast.model.feed
 import io.pcast.result.attempt
 import io.pcast.result.attemptEmpty
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
@@ -19,9 +20,11 @@ object FeedsTable : UUIDTable("feeds") {
     val synchronizedAt = datetime("synchronized_at").nullable()
 }
 
-class FeedRepositoryImpl : FeedRepository {
+class FeedRepositoryImpl(
+    private val db: Database
+) : FeedRepository {
     override fun save(feed: Feed) = attempt {
-        transaction {
+        transaction(db) {
             val existingFeed = FeedsTable
                 .selectAll()
                 .where { FeedsTable.id eq feed.id }
@@ -53,7 +56,7 @@ class FeedRepositoryImpl : FeedRepository {
     }
 
     override fun findAll() = attempt {
-         transaction {
+         transaction(db) {
             FeedsTable.selectAll().map(::mapRow)
         }
     }
@@ -61,7 +64,7 @@ class FeedRepositoryImpl : FeedRepository {
     override fun find(
         id: UUID
     ) = attempt {
-        transaction {
+        transaction(db) {
             FeedsTable
                 .selectAll()
                 .where { FeedsTable.id eq id }
@@ -73,7 +76,7 @@ class FeedRepositoryImpl : FeedRepository {
     override fun delete(
         id: UUID
     ) = attemptEmpty {
-        transaction {
+        transaction(db) {
             FeedsTable.deleteWhere { FeedsTable.id eq id }
         }
     }

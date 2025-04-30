@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 
-fun Application.configureDatabase() {
+fun Application.configureDatabase(): Database {
     val config = HikariConfig().apply {
         jdbcUrl = "jdbc:postgresql://localhost:5433/pcast"
         driverClassName = "org.postgresql.Driver"
@@ -19,12 +19,26 @@ fun Application.configureDatabase() {
     val dataSource = HikariDataSource(config)
     val db = Database.connect(dataSource)
 
-    transaction {
-        SchemaUtils.create(FeedsTable)
-    }
+    createSchemas(db)
 
     Runtime.getRuntime().addShutdownHook(Thread {
         db.connector().close()
         dataSource.close()
     })
+
+    return db
+}
+
+fun Application.configureTestDatabase(): Database {
+    val db = Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+
+    createSchemas(db)
+
+    return db
+}
+
+private fun createSchemas(db: Database) {
+    transaction(db) {
+        SchemaUtils.create(FeedsTable)
+    }
 }
