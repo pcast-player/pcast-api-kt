@@ -10,52 +10,56 @@ sealed class Result<out V : Any?, out E : Exception> {
     abstract fun get(): V
     abstract fun error(): E
 
-    class Ok<out V : Any?>(
-        val value: V
-    ) : Result<V, Nothing>() {
-        override operator fun component1(): V = value
-
-        override fun get(): V = value
-
-        override fun error() = throw IllegalArgumentException()
-
-        override fun toString() = "Ok: $value"
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-
-            return other is Ok<*> && value == other.value
-        }
-
-        override fun hashCode() = value?.hashCode() ?: 0
-    }
-
-    class Error<out E : Exception>(
-        val error: E
-    ) : Result<Nothing, E>() {
-        override fun component2(): E = error
-
-        override fun get() = throw error
-
-        override fun error() = error
-
-        override fun toString() = "Error: $error"
-        override fun hashCode() = error.hashCode()
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-
-            return other is Error<*> && error == other.error
-        }
-    }
-
     companion object {
         fun ok(): Ok<Unit> = Ok(Unit)
         fun <V : Any?> ok(value: V): Ok<V> = Ok(value)
-        fun <E : Exception> error(error: E): Result<Nothing, E> = Error(error)
-        fun error(): Error<Exception> = Error(Exception())
+        fun <E : Exception> error(error: E): Result<Nothing, E> = Err(error)
+        fun error(): Err<Exception> = Err(Exception())
     }
 }
+
+open class Ok<out V : Any?>(
+    val value: V
+) : Result<V, Nothing>() {
+    override operator fun component1(): V = value
+
+    override fun get(): V = value
+
+    override fun error() = throw IllegalArgumentException()
+
+    override fun toString() = "Ok: $value"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
+        return other is Ok<*> && value == other.value
+    }
+
+    override fun hashCode() = value?.hashCode() ?: 0
+}
+
+object None : Ok<Unit>(Unit)
+
+open class Err<out E : Exception>(
+    val error: E
+) : Result<Nothing, E>() {
+    override fun component2(): E = error
+
+    override fun get() = throw error
+
+    override fun error() = error
+
+    override fun toString() = "Error: $error"
+    override fun hashCode() = error.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
+        return other is Err<*> && error == other.error
+    }
+}
+
+object EmptyErr : Err<Exception>(Exception())
 
 infix fun <V : Any?, E : Exception> Result<V, E>.or(
     fallback: V
@@ -85,12 +89,20 @@ inline fun <T> attempt(callback: () -> T) = try {
     Result.error(e)
 }
 
+inline fun attemptEmpty(callback: () -> Unit) = try {
+    callback()
+
+    None
+} catch (e: Exception) {
+    Result.error(e)
+}
+
 @OptIn(ExperimentalContracts::class)
 fun <V, E : Exception> Result<V, E>.isOk(): Boolean {
     contract {
-        returns(true) implies (this@isOk is Result.Ok)
-        returns(false) implies (this@isOk is Result.Error)
+        returns(true) implies (this@isOk is Ok)
+        returns(false) implies (this@isOk is Err)
     }
 
-    return this is Result.Ok
+    return this is Ok
 }

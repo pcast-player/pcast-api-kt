@@ -6,6 +6,8 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.pcast.model.feed.FeedRepositoryImpl
+import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRouting
 
@@ -19,6 +21,7 @@ fun Application.module() {
         json()
     }
 
-    configureRouting()
+    configureDatabase()
+    configureRouting(FeedRepositoryImpl())
     configureMonitoring()
 }

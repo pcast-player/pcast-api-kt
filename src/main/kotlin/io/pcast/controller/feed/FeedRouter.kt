@@ -7,14 +7,15 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
-import io.pcast.model.feed.FeedRepositoryFactory
+import io.pcast.model.feed.FeedRepository
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
 import java.util.UUID
 
-fun Route.registerFeedRoutes() {
-    val repository = FeedRepositoryFactory.getRepository()
+fun Route.registerFeedRoutes(
+    repository: FeedRepository
+) {
     val handler = FeedHandler(repository)
 
     get("/feeds") {

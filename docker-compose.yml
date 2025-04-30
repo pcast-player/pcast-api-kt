@@ -1,0 +1,10 @@
+name: pcastk-api
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: pcast
+      POSTGRES_PASSWORD: pcast
+      POSTGRES_DB: pcast
+    ports:
+      - "5433:5432"

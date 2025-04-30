@@ -38,8 +38,13 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.48.0")
     implementation("org.jetbrains.exposed:exposed-java-time:0.48.0")
 
+    implementation("com.zaxxer:HikariCP:6.3.0")
+
     // SQLite
     implementation("org.xerial:sqlite-jdbc:3.45.1.0")
+
+    // Postgres
+    implementation("org.postgresql:postgresql:42.7.5")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

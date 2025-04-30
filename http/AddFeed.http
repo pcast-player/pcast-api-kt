@@ -1,0 +1,7 @@
+POST http://localhost:8080/api/feeds
+Content-Type: application/json
+
+{
+  "title": "title",
+  "url": "https://foo.bar"
+}

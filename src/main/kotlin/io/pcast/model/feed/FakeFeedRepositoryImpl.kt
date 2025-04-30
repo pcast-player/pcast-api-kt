@@ -19,7 +19,7 @@ private val FEEDS = buildMutableMap {
     }
 }
 
-class FakeFeedRepository : FeedRepository {
+class FakeFeedRepositoryImpl : FeedRepository {
     override fun save(feed: Feed): Result<Unit, Exception> {
         FEEDS[feed.id] = feed
 
