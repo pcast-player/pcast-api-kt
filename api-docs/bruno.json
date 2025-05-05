@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "pcast-api",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

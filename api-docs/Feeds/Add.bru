@@ -1,0 +1,19 @@
+meta {
+  name: Add
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/api/feeds
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "title",
+    "url": "https://foo.bar"
+  }
+  
+}
