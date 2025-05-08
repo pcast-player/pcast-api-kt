@@ -16,6 +16,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
@@ -36,7 +37,7 @@ private val FEEDS = buildList {
                 id = generateUuidV7(),
                 title = "Feed $i",
                 url = "https://rss.pcast.io/news$i.rss",
-                synchronizedAt = LocalDateTime.now().minusDays(i.toLong()).truncatedTo(ChronoUnit.SECONDS)
+                synchronizedAt = LocalDateTime.now().minusDays(i).truncatedTo(ChronoUnit.SECONDS)
             )
         )
     }
