@@ -23,6 +23,7 @@ import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureRouting
 import io.pcast.plugins.configureTestDatabase
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -35,7 +36,7 @@ private val FEEDS = buildList {
                 id = generateUuidV7(),
                 title = "Feed $i",
                 url = "https://rss.pcast.io/news$i.rss",
-                synchronizedAt = LocalDateTime.now().minusDays(i.toLong())
+                synchronizedAt = LocalDateTime.now().minusDays(i.toLong()).truncatedTo(ChronoUnit.SECONDS)
             )
         )
     }
