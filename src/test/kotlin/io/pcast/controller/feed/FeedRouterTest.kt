@@ -16,6 +16,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.pcast.config.loadConfiguration
 import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
@@ -135,7 +136,8 @@ internal class FeedRouterTest {
                 json()
             }
 
-            val db = configureTestDatabase()
+            val config = loadConfiguration()
+            val db = configureTestDatabase(config)
             val feedRepository = FeedRepositoryImpl(db)
 
             addTestData(feedRepository)

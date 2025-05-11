@@ -6,6 +6,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.pcast.config.loadConfiguration
 import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureMonitoring
@@ -21,7 +22,9 @@ fun Application.module() {
         json()
     }
 
-    val db = configureDatabase()
+    val config = loadConfiguration()
+    val db = configureDatabase(config)
+
     configureRouting(FeedRepositoryImpl(db))
     configureMonitoring()
 }
