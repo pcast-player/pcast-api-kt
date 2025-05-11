@@ -30,16 +30,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
+private val BASE_DATE = LocalDateTime.now()
+
+private fun feed(i: Int) = Feed(
+    id = generateUuidV7(),
+    title = "Feed $i",
+    url = "https://rss.pcast.io/news$i.rss",
+    synchronizedAt = BASE_DATE.minusDays(i).truncatedTo(ChronoUnit.SECONDS)
+)
+
 private val FEEDS = buildList {
     for (i in 1..10) {
-        add(
-            Feed(
-                id = generateUuidV7(),
-                title = "Feed $i",
-                url = "https://rss.pcast.io/news$i.rss",
-                synchronizedAt = LocalDateTime.now().minusDays(i).truncatedTo(ChronoUnit.SECONDS)
-            )
-        )
+        add(feed(i))
     }
 }
 
