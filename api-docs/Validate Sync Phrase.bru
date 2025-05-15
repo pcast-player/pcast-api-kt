@@ -1,0 +1,17 @@
+meta {
+  name: Validate Sync Phrase
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/api/sync/phrase
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "syncPhrase": "child skill notice absurd message win survey air put cradle same suggest caught vote city orchard tent purse inform vibrant fan organ indicate consider"
+  }
+}

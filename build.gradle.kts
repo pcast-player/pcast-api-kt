@@ -50,4 +50,6 @@ dependencies {
 
     implementation("com.sksamuel.hoplite:hoplite-core:2.9.0")
     implementation("com.sksamuel.hoplite:hoplite-hocon:2.9.0")
+
+    implementation("cash.z.ecc.android:kotlin-bip39:1.0.9")
 }
