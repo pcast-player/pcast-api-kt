@@ -3,14 +3,13 @@ package io.pcast.controller.feed
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
 import io.pcast.result.Result
-import java.util.UUID
 
 class FeedHandler(
     private val repository: FeedRepository
 ) {
     fun getFeeds() = repository.findAll()
 
-    fun getFeed(id: UUID) = repository.find(id)
+    fun getFeed(nanoId: String) = repository.findByNanoId(nanoId)
 
     fun addFeed(request: FeedRequest): Result<Feed, Exception> {
         val feed = request.toFeed()
@@ -20,8 +19,8 @@ class FeedHandler(
         return Result.ok(feed)
     }
 
-    fun updateFeed(id: UUID, request: FeedRequest) {
-        val feed = request.toFeed(id)
+    fun updateFeed(nanoId: String, request: FeedRequest) {
+        val feed = request.toFeed(nanoId = nanoId)
 
         repository.save(feed)
     }

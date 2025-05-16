@@ -11,7 +11,6 @@ import io.pcast.model.feed.FeedRepository
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
-import java.util.UUID
 
 fun Route.registerFeedRoutes(
     repository: FeedRepository
@@ -43,7 +42,10 @@ fun Route.registerFeedRoutes(
 
     get("/feeds/{id}") {
         attempt {
-            val id = UUID.fromString(call.parameters["id"])
+            val id = call.parameters["id"]
+
+            requireNotNull(id) { "Feed ID must be provided" }
+
             val result = handler.getFeed(id)
             val feed = result.unwrap(::FeedResponse)
 
@@ -55,7 +57,10 @@ fun Route.registerFeedRoutes(
 
     put("/feeds/{id}") {
         attempt {
-            val id = UUID.fromString(call.parameters["id"])
+            val id = call.parameters["id"]
+
+            requireNotNull(id) { "Feed ID must be provided" }
+
             val request = call.receive<FeedRequest>()
 
             handler.updateFeed(id, request)

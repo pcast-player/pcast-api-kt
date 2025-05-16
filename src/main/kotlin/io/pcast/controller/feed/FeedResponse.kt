@@ -1,6 +1,5 @@
 package io.pcast.controller.feed
 
-import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.serializer.LocalDateTimeSerializer
 import io.pcast.serializer.UuidSerializer
@@ -11,7 +10,9 @@ import java.util.UUID
 @Serializable
 data class FeedResponse(
     @Serializable(with = UuidSerializer::class)
-    val id: UUID = generateUuidV7(),
+    val id: UUID,
+
+    val nanoId: String,
 
     val title: String,
 
@@ -22,6 +23,7 @@ data class FeedResponse(
 ) {
     constructor(f: Feed) : this(
         id = f.id,
+        nanoId = f.nanoId,
         title = f.title,
         url = f.url,
         synchronizedAt = f.synchronizedAt

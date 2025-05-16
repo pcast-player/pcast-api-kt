@@ -18,6 +18,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.pcast.config.loadConfiguration
 import io.pcast.extensions.minusDays
+import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
@@ -35,6 +36,7 @@ private val BASE_DATE = LocalDateTime.now()
 
 private fun feed(i: Int) = Feed(
     id = generateUuidV7(),
+    nanoId = generateNanoId(),
     title = "Feed $i",
     url = "https://rss.pcast.io/news$i.rss",
     synchronizedAt = BASE_DATE.minusDays(i).truncatedTo(ChronoUnit.SECONDS)
@@ -63,7 +65,7 @@ internal class FeedRouterTest {
         val feed = FEEDS.first()
         val response = FeedResponse(feed)
 
-        client.get("/api/feeds/${feed.id}").apply {
+        client.get("/api/feeds/${feed.nanoId}").apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals(response, body<FeedResponse>())
         }
@@ -114,14 +116,14 @@ internal class FeedRouterTest {
         val newTitle = "new title"
         val client = configureServerAndGetClient()
 
-        client.put("/api/feeds/${feed.id}") {
+        client.put("/api/feeds/${feed.nanoId}") {
             header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             setBody(FeedRequest(newTitle, feed.url))
         }.apply {
             assertEquals(HttpStatusCode.NoContent, status)
         }
 
-        client.get("/api/feeds/${feed.id}").apply {
+        client.get("/api/feeds/${feed.nanoId}").apply {
             assertEquals(HttpStatusCode.OK, status)
 
             val response = body<FeedResponse>()

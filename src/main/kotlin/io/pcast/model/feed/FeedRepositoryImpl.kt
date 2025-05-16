@@ -1,5 +1,6 @@
 package io.pcast.model.feed
 
+import io.pcast.helpers.NANO_ID_LENGTH
 import io.pcast.result.attempt
 import io.pcast.result.attemptEmpty
 import org.jetbrains.exposed.dao.id.UUIDTable
@@ -15,6 +16,7 @@ import org.jetbrains.exposed.sql.update
 import java.util.UUID
 
 object FeedsTable : UUIDTable("feeds") {
+    val nanoId = char("nano_id", NANO_ID_LENGTH)
     val title = varchar("title", 255)
     val url = varchar("url", 255)
     val synchronizedAt = datetime("synchronized_at").nullable()
@@ -27,7 +29,7 @@ class FeedRepositoryImpl(
         transaction(db) {
             val existingFeed = FeedsTable
                 .selectAll()
-                .where { FeedsTable.id eq feed.id }
+                .where { FeedsTable.nanoId eq feed.nanoId }
                 .singleOrNull()
 
             if (existingFeed != null) {
@@ -39,7 +41,7 @@ class FeedRepositoryImpl(
     }
 
     private fun update(feed: Feed) {
-        FeedsTable.update({ FeedsTable.id eq feed.id }) {
+        FeedsTable.update({ FeedsTable.nanoId eq feed.nanoId }) {
             it[title] = feed.title
             it[url] = feed.url
             it[synchronizedAt] = feed.synchronizedAt
@@ -49,6 +51,7 @@ class FeedRepositoryImpl(
     private fun insert(feed: Feed) {
         FeedsTable.insert {
             it[id] = feed.id
+            it[nanoId] = feed.nanoId
             it[title] = feed.title
             it[url] = feed.url
             it[synchronizedAt] = feed.synchronizedAt
@@ -73,6 +76,18 @@ class FeedRepositoryImpl(
         } ?: throw FeedNotFoundException()
     }
 
+    override fun findByNanoId(
+        nanoId: String
+    ) = attempt {
+        transaction(db) {
+            FeedsTable
+                .selectAll()
+                .where { FeedsTable.nanoId eq nanoId }
+                .map(::mapRow)
+                .singleOrNull()
+        } ?: throw FeedNotFoundException()
+    }
+
     override fun delete(
         id: UUID
     ) = attemptEmpty {
@@ -83,6 +98,7 @@ class FeedRepositoryImpl(
 
     private fun mapRow(row: ResultRow) = Feed(
         id = row[FeedsTable.id].value,
+        nanoId = row[FeedsTable.nanoId],
         title = row[FeedsTable.title],
         url = row[FeedsTable.url],
         synchronizedAt = row[FeedsTable.synchronizedAt]
