@@ -26,6 +26,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    implementation("io.ktor:ktor-serialization-kotlinx-xml-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.2")
@@ -53,4 +54,7 @@ dependencies {
 
     implementation("cash.z.ecc.android:kotlin-bip39:1.0.9")
     implementation("io.viascom.nanoid:nanoid:1.0.1")
+
+    implementation("io.github.pdvrieze.xmlutil:core-jdk:0.91.1")
+    implementation("io.github.pdvrieze.xmlutil:serialization-jvm:0.91.1")
 }

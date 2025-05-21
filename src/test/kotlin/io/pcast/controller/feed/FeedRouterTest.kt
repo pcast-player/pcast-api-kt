@@ -12,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.xml.xml
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
@@ -150,6 +151,7 @@ internal class FeedRouterTest {
         return createClient {
             install(ClientContentNegotiation) {
                 json()
+                xml()
             }
         }
     }

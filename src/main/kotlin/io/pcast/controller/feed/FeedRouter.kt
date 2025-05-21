@@ -7,6 +7,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import io.pcast.controller.feed.opml.OpmlFile
 import io.pcast.model.feed.FeedRepository
 import io.pcast.result.attempt
 import io.pcast.result.or
@@ -68,6 +69,17 @@ fun Route.registerFeedRoutes(
             call.respond(HttpStatusCode.NoContent)
         } or {
             call.respond(HttpStatusCode.NotFound)
+        }
+    }
+
+    post("/feeds/opml") {
+        attempt {
+            val request = call.receive<OpmlFile>()
+            val feeds = handler.addFeeds(request).unwrap(::FeedResponse)
+
+            call.respond(HttpStatusCode.Created, feeds)
+        } or {
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 }
