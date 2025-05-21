@@ -6,6 +6,26 @@ meta {
 
 post {
   url: http://localhost:8080/api/feeds/opml
-  body: none
+  body: xml
   auth: inherit
+}
+
+headers {
+  Content-Type: application/xml
+}
+
+body:xml {
+  <?xml version="1.0" encoding="utf-8" standalone="no"?>
+  <opml version="1.0">
+  	<head>
+  		<title>Pocket Casts Feeds</title>
+  	</head>
+  	<body>
+  		<outline text="feeds">
+  			<outline xmlUrl="https://buchpodcast.libsyn.com/rss" type="rss" text="Kapitel Eins" />
+  			<outline type="rss" text="Stay Forever - Retrogames &amp; Technik" xmlUrl="https://podcastd45a61.podigee.io/feed/mp3" />
+  		</outline>
+  	</body>
+  </opml>
+  
 }
