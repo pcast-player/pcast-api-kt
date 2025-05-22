@@ -3,12 +3,9 @@ package io.pcast.plugins
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.pcast.config.Configuration
-import io.pcast.model.feed.FeedsTable
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
 
 fun configureDatabase(config: Configuration) = connectAndMigrate(
     dataSource = hikariDataSource {
@@ -38,10 +35,6 @@ private fun connectAndMigrate(
     }
 
     val db = Database.connect(dataSource)
-
-    transaction(db) {
-        SchemaUtils.create(FeedsTable)
-    }
 
     Runtime.getRuntime().addShutdownHook(Thread {
         db.connector().close()
