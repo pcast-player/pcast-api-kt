@@ -2,5 +2,24 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["io.ktor"],
+      "groupName": "ktor",
+      "separateMinorPatch": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["docker"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "enabled": false
+    }
   ]
 }
