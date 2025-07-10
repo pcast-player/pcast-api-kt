@@ -95,12 +95,11 @@ class FeedRepositoryImpl(
         }
     }
 
-    private fun mapRow(row: ResultRow) =
-        Feed(
-            id = row[FeedsTable.id].value,
-            nanoId = row[FeedsTable.nanoId],
-            title = row[FeedsTable.title],
-            url = row[FeedsTable.url],
-            synchronizedAt = row[FeedsTable.synchronizedAt],
-        )
+    private fun mapRow(row: ResultRow) = Feed(
+        id = row[FeedsTable.id].value,
+        nanoId = row[FeedsTable.nanoId],
+        title = row[FeedsTable.title],
+        url = row[FeedsTable.url],
+        synchronizedAt = row[FeedsTable.synchronizedAt],
+    )
 }
