@@ -35,103 +35,113 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 
 private val BASE_DATE = LocalDateTime.now()
 
-private fun feed(i: Int) = Feed(
-    id = generateUuidV7(),
-    nanoId = generateNanoId(),
-    title = "Feed $i",
-    url = "https://rss.pcast.io/news$i.rss",
-    synchronizedAt = BASE_DATE.minusDays(i).truncatedTo(ChronoUnit.SECONDS)
-)
+private fun feed(i: Int) =
+    Feed(
+        id = generateUuidV7(),
+        nanoId = generateNanoId(),
+        title = "Feed $i",
+        url = "https://rss.pcast.io/news$i.rss",
+        synchronizedAt = BASE_DATE.minusDays(i).truncatedTo(ChronoUnit.SECONDS),
+    )
 
-private val FEEDS = buildList {
-    for (i in 1..10) {
-        add(feed(i))
+private val FEEDS =
+    buildList {
+        for (i in 1..10) {
+            add(feed(i))
+        }
     }
-}
 
 internal class FeedRouterTest {
     @Test
-    fun testGetFeeds() = testApplication {
-        val client = configureServerAndGetClient()
+    fun testGetFeeds() =
+        testApplication {
+            val client = configureServerAndGetClient()
 
-        client.get("/api/feeds").apply {
-            assertEquals(HttpStatusCode.OK, status)
-            assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
+            client.get("/api/feeds").apply {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
+            }
         }
-    }
 
     @Test
-    fun testGetFeed() = testApplication {
-        val client = configureServerAndGetClient()
-        val feed = FEEDS.first()
-        val response = FeedResponse(feed)
+    fun testGetFeed() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val feed = FEEDS.first()
+            val response = FeedResponse(feed)
 
-        client.get("/api/feeds/${feed.nanoId}").apply {
-            assertEquals(HttpStatusCode.OK, status)
-            assertEquals(response, body<FeedResponse>())
+            client.get("/api/feeds/${feed.nanoId}").apply {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals(response, body<FeedResponse>())
+            }
         }
-    }
 
     @Test
-    fun testGetFeedFailsWithUnknownId() = testApplication {
-        val client = configureServerAndGetClient()
-        val uuid = Generators.timeBasedGenerator().generate()
+    fun testGetFeedFailsWithUnknownId() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val uuid = Generators.timeBasedGenerator().generate()
 
-        client.get("/api/feeds/$uuid").apply {
-            assertEquals(HttpStatusCode.NotFound, status)
+            client.get("/api/feeds/$uuid").apply {
+                assertEquals(HttpStatusCode.NotFound, status)
+            }
         }
-    }
 
     @Test
-    fun testGetFeedFailsWithWrongIdType() = testApplication {
-        val client = configureServerAndGetClient()
+    fun testGetFeedFailsWithWrongIdType() =
+        testApplication {
+            val client = configureServerAndGetClient()
 
-        client.get("/api/feeds/fdsfsdf").apply {
-            assertEquals(HttpStatusCode.NotFound, status)
+            client.get("/api/feeds/fdsfsdf").apply {
+                assertEquals(HttpStatusCode.NotFound, status)
+            }
         }
-    }
 
     @Test
-    fun testCreateFeed() = testApplication {
-        val title = "title"
-        val url = "https://foo.bar"
-        val client = configureServerAndGetClient()
+    fun testCreateFeed() =
+        testApplication {
+            val title = "title"
+            val url = "https://foo.bar"
+            val client = configureServerAndGetClient()
 
-        client.post("/api/feeds") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            setBody(FeedRequest(title, url))
-        }.apply {
-            assertEquals(HttpStatusCode.Created, status)
+            client
+                .post("/api/feeds") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(FeedRequest(title, url))
+                }.apply {
+                    assertEquals(HttpStatusCode.Created, status)
 
-            val response = body<FeedResponse>()
+                    val response = body<FeedResponse>()
 
-            assertEquals(title, response.title)
-            assertEquals(url, response.url)
-            assertNull(response.synchronizedAt)
+                    assertEquals(title, response.title)
+                    assertEquals(url, response.url)
+                    assertNull(response.synchronizedAt)
+                }
         }
-    }
 
     @Test
-    fun testUpdateFeed() = testApplication {
-        val feed = FEEDS.first()
-        val newTitle = "new title"
-        val client = configureServerAndGetClient()
+    fun testUpdateFeed() =
+        testApplication {
+            val feed = FEEDS.first()
+            val newTitle = "new title"
+            val client = configureServerAndGetClient()
 
-        client.put("/api/feeds/${feed.nanoId}") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            setBody(FeedRequest(newTitle, feed.url))
-        }.apply {
-            assertEquals(HttpStatusCode.NoContent, status)
+            client
+                .put("/api/feeds/${feed.nanoId}") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(FeedRequest(newTitle, feed.url))
+                }.apply {
+                    assertEquals(HttpStatusCode.NoContent, status)
+                }
+
+            client.get("/api/feeds/${feed.nanoId}").apply {
+                assertEquals(HttpStatusCode.OK, status)
+
+                val response = body<FeedResponse>()
+
+                assertEquals(newTitle, response.title)
+            }
         }
-
-        client.get("/api/feeds/${feed.nanoId}").apply {
-            assertEquals(HttpStatusCode.OK, status)
-
-            val response = body<FeedResponse>()
-
-            assertEquals(newTitle, response.title)
-        }
-    }
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {

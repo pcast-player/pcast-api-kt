@@ -5,5 +5,5 @@ data class Database(
     val driver: String,
     val migrationsLocation: String,
     val user: String,
-    val password: String? = null
+    val password: String? = null,
 )

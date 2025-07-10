@@ -13,6 +13,7 @@ plugins {
     kotlin("jvm") version "2.1.21"
     id("io.ktor.plugin") version "3.1.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"
+    id("com.diffplug.spotless") version "7.1.0"
 }
 
 group = "io.pcast"
@@ -23,6 +24,12 @@ application {
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+}
+
+spotless {
+    kotlin {
+        ktlint().setEditorConfigPath("$projectDir/.editorconfig")
+    }
 }
 
 repositories {

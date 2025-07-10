@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ValidateSyncPhraseRequest(
-    val syncPhrase: String
+    val syncPhrase: String,
 )
