@@ -2,7 +2,7 @@ package io.pcast.model.feed
 
 import io.pcast.helpers.NANO_ID_LENGTH
 import io.pcast.result.attempt
-import io.pcast.result.attemptEmpty
+import io.pcast.result.attemptWithoutResponse
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -89,12 +89,11 @@ class FeedRepositoryImpl(
             } ?: throw FeedNotFoundException()
         }
 
-    override fun delete(id: UUID) =
-        attemptEmpty {
-            transaction(db) {
-                FeedsTable.deleteWhere { FeedsTable.id eq id }
-            }
+    override fun delete(id: UUID) = attemptWithoutResponse {
+        transaction(db) {
+            FeedsTable.deleteWhere { FeedsTable.id eq id }
         }
+    }
 
     private fun mapRow(row: ResultRow) =
         Feed(

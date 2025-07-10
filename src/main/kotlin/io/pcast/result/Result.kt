@@ -91,7 +91,7 @@ inline fun <T> attempt(callback: () -> T) =
         Result.error(e)
     }
 
-inline fun attemptEmpty(callback: () -> Unit) =
+inline fun attemptWithoutResponse(callback: () -> Unit) =
     try {
         callback()
 
