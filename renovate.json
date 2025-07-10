@@ -8,6 +8,10 @@
       "matchPackagePatterns": ["io.ktor"],
       "groupName": "ktor",
       "separateMinorPatch": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "enabled": false
     }
   ]
 }
