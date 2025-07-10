@@ -18,6 +18,4 @@ fun generateNanoId(): String = NanoId.generate(NANO_ID_LENGTH, alphabet = NANO_I
  * @param builder A lambda that takes a [MutableMap] receiver and populates it.
  * @return A new [MutableMap] populated by the [builder].
  */
-fun <K, V> buildMutableMap(
-    builder: MutableMap<K, V>.() -> Unit
-) = mutableMapOf<K, V>().apply(builder)
+fun <K, V> buildMutableMap(builder: MutableMap<K, V>.() -> Unit) = mutableMapOf<K, V>().apply(builder)

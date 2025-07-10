@@ -9,16 +9,16 @@ import java.util.UUID
 @Serializable
 data class FeedRequest(
     val title: String,
-    val url: String
+    val url: String,
 ) {
     fun toFeed(
         id: UUID = generateUuidV7(),
-        nanoId: String = generateNanoId()
+        nanoId: String = generateNanoId(),
     ) = Feed(
         id = id,
         nanoId = nanoId,
         title = title,
         url = url,
-        synchronizedAt = null
+        synchronizedAt = null,
     )
 }

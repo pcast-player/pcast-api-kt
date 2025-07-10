@@ -14,7 +14,7 @@ import java.util.UUID
 data class OpmlFile(
     val version: String,
     val head: OpmlHead,
-    val body: OpmlBody
+    val body: OpmlBody,
 )
 
 @Serializable
@@ -28,15 +28,15 @@ data class OpmlHead(
 @XmlSerialName("body")
 data class OpmlBody(
     @XmlSerialName("outline")
-    val outlines: OpmlOutlines
+    val outlines: OpmlOutlines,
 )
 
 @Serializable
 @XmlSerialName("outline")
 data class OpmlOutlines(
     val text: String,
-    val outlines: List<OpmlOutline>
-): Iterable<OpmlOutline> {
+    val outlines: List<OpmlOutline>,
+) : Iterable<OpmlOutline> {
     override fun iterator() = outlines.iterator()
 }
 
@@ -45,16 +45,16 @@ data class OpmlOutlines(
 data class OpmlOutline(
     val text: String,
     val type: String,
-    val xmlUrl: String
+    val xmlUrl: String,
 ) {
     fun toFeed(
         id: UUID = generateUuidV7(),
-        nanoId: String = generateNanoId()
+        nanoId: String = generateNanoId(),
     ) = Feed(
         id = id,
         nanoId = nanoId,
         title = text,
         url = xmlUrl,
-        synchronizedAt = null
+        synchronizedAt = null,
     )
 }

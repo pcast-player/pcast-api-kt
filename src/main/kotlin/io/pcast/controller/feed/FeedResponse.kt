@@ -11,22 +11,17 @@ import java.util.UUID
 data class FeedResponse(
     @Serializable(with = UuidSerializer::class)
     val id: UUID,
-
     val nanoId: String,
-
     val title: String,
-
     val url: String,
-
     @Serializable(with = LocalDateTimeSerializer::class)
-    val synchronizedAt: LocalDateTime? = null
+    val synchronizedAt: LocalDateTime? = null,
 ) {
     constructor(f: Feed) : this(
         id = f.id,
         nanoId = f.nanoId,
         title = f.title,
         url = f.url,
-        synchronizedAt = f.synchronizedAt
+        synchronizedAt = f.synchronizedAt,
     )
 }
-

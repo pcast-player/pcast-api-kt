@@ -13,9 +13,7 @@ import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
 
-fun Route.registerFeedRoutes(
-    repository: FeedRepository
-) {
+fun Route.registerFeedRoutes(repository: FeedRepository) {
     val handler = FeedHandler(repository)
 
     get("/feeds") {

@@ -5,21 +5,26 @@ import kotlin.contracts.contract
 
 sealed class Result<out V : Any?, out E : Exception> {
     open operator fun component1(): V? = null
+
     open operator fun component2(): E? = null
 
     abstract fun get(): V
+
     abstract fun error(): E
 
     companion object {
         fun ok(): Ok<Unit> = Ok(Unit)
+
         fun <V : Any?> ok(value: V): Ok<V> = Ok(value)
+
         fun <E : Exception> error(error: E): Result<Nothing, E> = Err(error)
+
         fun error(): Err<Exception> = Err(Exception())
     }
 }
 
 open class Ok<out V : Any?>(
-    val value: V
+    val value: V,
 ) : Result<V, Nothing>() {
     override operator fun component1(): V = value
 
@@ -41,7 +46,7 @@ open class Ok<out V : Any?>(
 object None : Ok<Unit>(Unit)
 
 open class Err<out E : Exception>(
-    val error: E
+    val error: E,
 ) : Result<Nothing, E>() {
     override fun component2(): E = error
 
@@ -50,6 +55,7 @@ open class Err<out E : Exception>(
     override fun error() = error
 
     override fun toString() = "Error: $error"
+
     override fun hashCode() = error.hashCode()
 
     override fun equals(other: Any?): Boolean {
@@ -61,19 +67,14 @@ open class Err<out E : Exception>(
 
 object EmptyErr : Err<Exception>(Exception())
 
-infix fun <V : Any?, E : Exception> Result<V, E>.or(
-    fallback: V
-) = if (isOk()) value else fallback
+infix fun <V : Any?, E : Exception> Result<V, E>.or(fallback: V) = if (isOk()) value else fallback
 
-inline infix fun <V : Any?, E : Exception> Result<V, E>.or(
-    callback: (E) -> V
-) = if (isOk()) value else callback(error)
+inline infix fun <V : Any?, E : Exception> Result<V, E>.or(callback: (E) -> V) = if (isOk()) value else callback(error)
 
 fun <V : Any?, E : Exception> Result<V, E>.orNull(): V? = or(null)
 
-inline infix fun <V : Any?, E : Exception> Result<V, E>.onOk(
-    callback: (V) -> Unit
-) = if (isOk()) callback(value) else Unit
+inline infix fun <V : Any?, E : Exception> Result<V, E>.onOk(callback: (V) -> Unit) =
+    if (isOk()) callback(value) else Unit
 
 fun <V : Any?, E : Exception> Result<V, E>.unwrap(): V = or { throw it }
 
@@ -83,19 +84,21 @@ fun <V : Any?, E : Exception, R> Result<V, E>.unwrap(transform: (r: V) -> R): R 
 fun <V : Any?, E : Exception, R> Result<Collection<V>, E>.unwrap(transform: (r: V) -> R): List<R> =
     if (isOk()) value.map(transform) else throw error
 
-inline fun <T> attempt(callback: () -> T) = try {
-    Result.ok(callback())
-} catch (e: Exception) {
-    Result.error(e)
-}
+inline fun <T> attempt(callback: () -> T) =
+    try {
+        Result.ok(callback())
+    } catch (e: Exception) {
+        Result.error(e)
+    }
 
-inline fun attemptEmpty(callback: () -> Unit) = try {
-    callback()
+inline fun attemptEmpty(callback: () -> Unit) =
+    try {
+        callback()
 
-    None
-} catch (e: Exception) {
-    Result.error(e)
-}
+        None
+    } catch (e: Exception) {
+        Result.error(e)
+    }
 
 @OptIn(ExperimentalContracts::class)
 fun <V, E : Exception> Result<V, E>.isOk(): Boolean {

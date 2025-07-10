@@ -28,7 +28,7 @@ application {
 
 spotless {
     kotlin {
-        ktlint()
+        ktlint().setEditorConfigPath("$projectDir/.editorconfig")
     }
 }
 

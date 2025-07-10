@@ -4,15 +4,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class HelpersTest {
-
     @Test
     fun testBuildMutableMap() {
         // Create a map using buildMutableMap
-        val map = buildMutableMap<String, Int> {
-            put("one", 1)
-            put("two", 2)
-            put("three", 3)
-        }
+        val map =
+            buildMutableMap<String, Int> {
+                put("one", 1)
+                put("two", 2)
+                put("three", 3)
+            }
 
         // Verify the map contains the expected entries
         assertEquals(3, map.size)

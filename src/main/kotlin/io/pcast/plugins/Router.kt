@@ -7,9 +7,7 @@ import io.pcast.controller.feed.registerFeedRoutes
 import io.pcast.controller.sync.registerSyncRoutes
 import io.pcast.model.feed.FeedRepository
 
-fun Application.configureRouting(
-    feedRepository: FeedRepository
-) {
+fun Application.configureRouting(feedRepository: FeedRepository) {
     routing {
         route("/api") {
             registerFeedRoutes(feedRepository)

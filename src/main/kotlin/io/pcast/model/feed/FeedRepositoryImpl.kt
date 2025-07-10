@@ -23,22 +23,24 @@ object FeedsTable : UUIDTable("feeds") {
 }
 
 class FeedRepositoryImpl(
-    private val db: Database
+    private val db: Database,
 ) : FeedRepository {
-    override fun save(feed: Feed) = attempt {
-        transaction(db) {
-            val existingFeed = FeedsTable
-                .selectAll()
-                .where { FeedsTable.nanoId eq feed.nanoId }
-                .singleOrNull()
+    override fun save(feed: Feed) =
+        attempt {
+            transaction(db) {
+                val existingFeed =
+                    FeedsTable
+                        .selectAll()
+                        .where { FeedsTable.nanoId eq feed.nanoId }
+                        .singleOrNull()
 
-            if (existingFeed != null) {
-                update(feed)
-            } else {
-                insert(feed)
+                if (existingFeed != null) {
+                    update(feed)
+                } else {
+                    insert(feed)
+                }
             }
         }
-    }
 
     private fun update(feed: Feed) {
         FeedsTable.update({ FeedsTable.nanoId eq feed.nanoId }) {
@@ -58,49 +60,48 @@ class FeedRepositoryImpl(
         }
     }
 
-    override fun findAll() = attempt {
-         transaction(db) {
-            FeedsTable.selectAll().map(::mapRow)
+    override fun findAll() =
+        attempt {
+            transaction(db) {
+                FeedsTable.selectAll().map(::mapRow)
+            }
         }
-    }
 
-    override fun find(
-        id: UUID
-    ) = attempt {
-        transaction(db) {
-            FeedsTable
-                .selectAll()
-                .where { FeedsTable.id eq id }
-                .map(::mapRow)
-                .singleOrNull()
-        } ?: throw FeedNotFoundException()
-    }
-
-    override fun findByNanoId(
-        nanoId: String
-    ) = attempt {
-        transaction(db) {
-            FeedsTable
-                .selectAll()
-                .where { FeedsTable.nanoId eq nanoId }
-                .map(::mapRow)
-                .singleOrNull()
-        } ?: throw FeedNotFoundException()
-    }
-
-    override fun delete(
-        id: UUID
-    ) = attemptEmpty {
-        transaction(db) {
-            FeedsTable.deleteWhere { FeedsTable.id eq id }
+    override fun find(id: UUID) =
+        attempt {
+            transaction(db) {
+                FeedsTable
+                    .selectAll()
+                    .where { FeedsTable.id eq id }
+                    .map(::mapRow)
+                    .singleOrNull()
+            } ?: throw FeedNotFoundException()
         }
-    }
 
-    private fun mapRow(row: ResultRow) = Feed(
-        id = row[FeedsTable.id].value,
-        nanoId = row[FeedsTable.nanoId],
-        title = row[FeedsTable.title],
-        url = row[FeedsTable.url],
-        synchronizedAt = row[FeedsTable.synchronizedAt]
-    )
+    override fun findByNanoId(nanoId: String) =
+        attempt {
+            transaction(db) {
+                FeedsTable
+                    .selectAll()
+                    .where { FeedsTable.nanoId eq nanoId }
+                    .map(::mapRow)
+                    .singleOrNull()
+            } ?: throw FeedNotFoundException()
+        }
+
+    override fun delete(id: UUID) =
+        attemptEmpty {
+            transaction(db) {
+                FeedsTable.deleteWhere { FeedsTable.id eq id }
+            }
+        }
+
+    private fun mapRow(row: ResultRow) =
+        Feed(
+            id = row[FeedsTable.id].value,
+            nanoId = row[FeedsTable.nanoId],
+            title = row[FeedsTable.title],
+            url = row[FeedsTable.url],
+            synchronizedAt = row[FeedsTable.synchronizedAt],
+        )
 }

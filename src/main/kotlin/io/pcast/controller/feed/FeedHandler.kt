@@ -6,7 +6,7 @@ import io.pcast.model.feed.FeedRepository
 import io.pcast.result.Result
 
 class FeedHandler(
-    private val repository: FeedRepository
+    private val repository: FeedRepository,
 ) {
     fun getFeeds() = repository.findAll()
 
@@ -21,18 +21,22 @@ class FeedHandler(
     }
 
     fun addFeeds(opmlFile: OpmlFile): Result<List<Feed>, Exception> {
-        val feeds = buildList {
-            for (outline in opmlFile.body.outlines) {
-                val feed = outline.toFeed()
+        val feeds =
+            buildList {
+                for (outline in opmlFile.body.outlines) {
+                    val feed = outline.toFeed()
 
-                repository.save(feed).also { add(feed) }
+                    repository.save(feed).also { add(feed) }
+                }
             }
-        }
 
         return Result.ok(feeds)
     }
 
-    fun updateFeed(nanoId: String, request: FeedRequest) {
+    fun updateFeed(
+        nanoId: String,
+        request: FeedRequest,
+    ) {
         val feed = request.toFeed(nanoId = nanoId)
 
         repository.save(feed)
