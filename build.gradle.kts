@@ -10,7 +10,7 @@ val hopliteVersion: String by project
 val xmlUtilVersion: String by project
 
 plugins {
-    kotlin("jvm") version "2.1.21"
+    kotlin("jvm") version "2.2.0"
     id("io.ktor.plugin") version "3.1.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"
     id("com.diffplug.spotless") version "7.1.0"
