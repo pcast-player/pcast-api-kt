@@ -17,15 +17,17 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.config.loadConfiguration
+import io.pcast.di.appModule
+import io.pcast.di.configModule
+import io.pcast.di.testDbModule
 import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
-import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureRouting
-import io.pcast.plugins.configureTestDatabase
+import org.koin.ktor.plugin.Koin
+import org.koin.test.KoinTest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -51,7 +53,7 @@ private val FEEDS =
         }
     }
 
-internal class FeedRouterTest {
+internal class FeedRouterTest : KoinTest {
     @Test
     fun testGetFeeds() =
         testApplication {
@@ -145,17 +147,17 @@ internal class FeedRouterTest {
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
+            install(Koin) {
+                modules(configModule, testDbModule, appModule)
+            }
+
             install(ContentNegotiation) {
                 json()
             }
 
-            val config = loadConfiguration()
-            val db = configureTestDatabase(config)
-            val feedRepository = FeedRepositoryImpl(db)
+            addTestData()
 
-            addTestData(feedRepository)
-
-            configureRouting(feedRepository)
+            configureRouting()
         }
 
         return createClient {
@@ -166,7 +168,9 @@ internal class FeedRouterTest {
         }
     }
 
-    private fun addTestData(feedRepository: FeedRepository) {
+    private fun addTestData() {
+        val feedRepository = getKoin().get<FeedRepository>()
+
         for (feed in FEEDS) {
             feedRepository.save(feed)
         }
