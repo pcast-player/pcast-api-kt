@@ -1,4 +1,4 @@
-package io.pcast.controller.sync
+package io.pcast.service.sync
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -12,12 +12,12 @@ import io.pcast.result.unwrap
 import org.koin.ktor.ext.inject
 
 fun Route.registerSyncRoutes() {
-    val handler by inject<SyncHandler>()
+    val service by inject<SyncService>()
 
     get("/sync/phrase") {
         attempt {
-            val syncCode = handler.createSyncPhrase().unwrap()
-            val response = CreateSyncCodeResponse(syncCode)
+            val syncCode = service.createSyncPhrase().unwrap()
+            val response = CreateSyncCodeViewModel(syncCode)
 
             call.respond(HttpStatusCode.Created, response)
         } or {
@@ -30,11 +30,11 @@ fun Route.registerSyncRoutes() {
             val request = call.receive<ValidateSyncPhraseRequest>()
             val phrase = request.syncPhrase.toCharArray()
 
-            handler.getSeedFromSyncPhrase(phrase).unwrap()
+            service.getSeedFromSyncPhrase(phrase).unwrap()
 
-            call.respond(ValidateSyncPhraseResponse(true))
+            call.respond(ValidateSyncPhraseViewModel(true))
         } or {
-            call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseResponse(false))
+            call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseViewModel(false))
         }
     }
 }

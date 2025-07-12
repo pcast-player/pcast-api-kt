@@ -1,4 +1,4 @@
-package io.pcast.controller.feed
+package io.pcast.service.feed
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -7,19 +7,19 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
-import io.pcast.controller.feed.opml.OpmlFile
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
+import io.pcast.service.feed.opml.OpmlFile
 import org.koin.ktor.ext.inject
 
 fun Route.registerFeedRoutes() {
-    val handler by inject<FeedHandler>()
+    val service by inject<FeedService>()
 
     get("/feeds") {
         attempt {
-            val result = handler.getFeeds()
-            val feeds = result.unwrap(::FeedResponse)
+            val result = service.getFeeds()
+            val feeds = result.unwrap(::FeedViewModel)
 
             call.respond(feeds)
         } or {
@@ -30,8 +30,8 @@ fun Route.registerFeedRoutes() {
     post("/feeds") {
         attempt {
             val request = call.receive<FeedRequest>()
-            val result = handler.addFeed(request)
-            val feed = result.unwrap(::FeedResponse)
+            val result = service.addFeed(request)
+            val feed = result.unwrap(::FeedViewModel)
 
             call.respond(HttpStatusCode.Created, feed)
         } or {
@@ -45,8 +45,8 @@ fun Route.registerFeedRoutes() {
 
             requireNotNull(id) { "Feed ID must be provided" }
 
-            val result = handler.getFeed(id)
-            val feed = result.unwrap(::FeedResponse)
+            val result = service.getFeed(id)
+            val feed = result.unwrap(::FeedViewModel)
 
             call.respond(feed)
         } or {
@@ -62,7 +62,7 @@ fun Route.registerFeedRoutes() {
 
             val request = call.receive<FeedRequest>()
 
-            handler.updateFeed(id, request)
+            service.updateFeed(id, request)
 
             call.respond(HttpStatusCode.NoContent)
         } or {
@@ -73,7 +73,7 @@ fun Route.registerFeedRoutes() {
     post("/feeds/opml") {
         attempt {
             val request = call.receive<OpmlFile>()
-            val feeds = handler.addFeeds(request).unwrap(::FeedResponse)
+            val feeds = service.addFeeds(request).unwrap(::FeedViewModel)
 
             call.respond(HttpStatusCode.Created, feeds)
         } or {

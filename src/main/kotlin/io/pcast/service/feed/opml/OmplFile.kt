@@ -1,5 +1,5 @@
 
-package io.pcast.controller.feed.opml
+package io.pcast.service.feed.opml
 
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
