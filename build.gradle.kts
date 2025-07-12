@@ -80,5 +80,5 @@ dependencies {
     implementation("io.insert-koin:koin-ktor:$koinVersion")
     implementation("io.insert-koin:koin-logger-slf4j:$koinVersion")
     testImplementation("io.insert-koin:koin-test:$koinVersion")
-    testImplementation("io.insert-koin:koin-test-junit4:$koinVersion")
+    testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
 }
