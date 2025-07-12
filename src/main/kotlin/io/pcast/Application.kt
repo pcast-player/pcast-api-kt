@@ -8,6 +8,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.pcast.di.appModule
+import io.pcast.di.configModule
+import io.pcast.di.dbModule
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRouting
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
@@ -23,7 +25,7 @@ fun main() {
 fun Application.module() {
     install(Koin) {
         slf4jLogger()
-        modules(appModule)
+        modules(configModule, dbModule, appModule)
     }
 
     install(ContentNegotiation) {

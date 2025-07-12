@@ -17,16 +17,15 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.config.loadConfiguration
+import io.pcast.di.appModule
+import io.pcast.di.configModule
+import io.pcast.di.testDbModule
 import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
-import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureRouting
-import io.pcast.plugins.configureTestDatabase
-import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
 import java.time.LocalDateTime
@@ -149,23 +148,14 @@ internal class FeedRouterTest : KoinTest {
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
             install(Koin) {
-                modules(
-                    module {
-                        single { loadConfiguration() }
-                        single { configureTestDatabase(get()) }
-                        single<FeedRepository> { FeedRepositoryImpl(get()) }
-
-                        single { FeedHandler(get()) }
-                    },
-                )
+                modules(configModule, testDbModule, appModule)
             }
 
             install(ContentNegotiation) {
                 json()
             }
 
-            val feedRepository = getKoin().get<FeedRepository>()
-            addTestData(feedRepository)
+            addTestData()
 
             configureRouting()
         }
@@ -178,7 +168,9 @@ internal class FeedRouterTest : KoinTest {
         }
     }
 
-    private fun addTestData(feedRepository: FeedRepository) {
+    private fun addTestData() {
+        val feedRepository = getKoin().get<FeedRepository>()
+
         for (feed in FEEDS) {
             feedRepository.save(feed)
         }
