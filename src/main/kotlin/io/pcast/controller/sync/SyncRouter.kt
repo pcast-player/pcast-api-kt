@@ -9,9 +9,10 @@ import io.ktor.server.routing.post
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
+import org.koin.ktor.ext.inject
 
 fun Route.registerSyncRoutes() {
-    val handler = SyncHandler()
+    val handler by inject<SyncHandler>()
 
     get("/sync/phrase") {
         attempt {

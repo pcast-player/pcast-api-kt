@@ -8,13 +8,13 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.pcast.controller.feed.opml.OpmlFile
-import io.pcast.model.feed.FeedRepository
 import io.pcast.result.attempt
 import io.pcast.result.or
 import io.pcast.result.unwrap
+import org.koin.ktor.ext.inject
 
-fun Route.registerFeedRoutes(repository: FeedRepository) {
-    val handler = FeedHandler(repository)
+fun Route.registerFeedRoutes() {
+    val handler by inject<FeedHandler>()
 
     get("/feeds") {
         attempt {

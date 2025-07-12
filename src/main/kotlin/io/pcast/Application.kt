@@ -7,12 +7,12 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.pcast.config.loadConfiguration
-import io.pcast.model.feed.FeedRepositoryImpl
-import io.pcast.plugins.configureDatabase
+import io.pcast.di.appModule
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRouting
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -21,14 +21,17 @@ fun main() {
 
 @OptIn(ExperimentalXmlUtilApi::class)
 fun Application.module() {
+    // Install Koin
+    install(Koin) {
+        slf4jLogger()
+        modules(appModule)
+    }
+
     install(ContentNegotiation) {
         json()
         xml()
     }
 
-    val config = loadConfiguration()
-    val db = configureDatabase(config)
-
-    configureRouting(FeedRepositoryImpl(db))
+    configureRouting()
     configureMonitoring()
 }

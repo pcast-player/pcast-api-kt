@@ -8,6 +8,7 @@ val postgresVersion: String by project
 val h2Version: String by project
 val hopliteVersion: String by project
 val xmlUtilVersion: String by project
+val koinVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.2.0"
@@ -73,4 +74,11 @@ dependencies {
 
     implementation("io.github.pdvrieze.xmlutil:core-jdk:$xmlUtilVersion")
     implementation("io.github.pdvrieze.xmlutil:serialization-jvm:$xmlUtilVersion")
+
+    // Koin for dependency injection
+    implementation("io.insert-koin:koin-core:$koinVersion")
+    implementation("io.insert-koin:koin-ktor:$koinVersion")
+    implementation("io.insert-koin:koin-logger-slf4j:$koinVersion")
+    testImplementation("io.insert-koin:koin-test:$koinVersion")
+    testImplementation("io.insert-koin:koin-test-junit4:$koinVersion")
 }

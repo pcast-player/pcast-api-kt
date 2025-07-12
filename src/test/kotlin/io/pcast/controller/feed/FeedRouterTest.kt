@@ -26,6 +26,9 @@ import io.pcast.model.feed.FeedRepository
 import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureRouting
 import io.pcast.plugins.configureTestDatabase
+import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
+import org.koin.test.KoinTest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -51,7 +54,7 @@ private val FEEDS =
         }
     }
 
-internal class FeedRouterTest {
+internal class FeedRouterTest : KoinTest {
     @Test
     fun testGetFeeds() =
         testApplication {
@@ -145,17 +148,27 @@ internal class FeedRouterTest {
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
+            install(Koin) {
+                modules(
+                    module {
+                        single { loadConfiguration() }
+                        single { configureTestDatabase(get()) }
+                        single<FeedRepository> { FeedRepositoryImpl(get()) }
+
+                        single { FeedHandler(get()) }
+                    },
+                )
+            }
+
             install(ContentNegotiation) {
                 json()
             }
 
-            val config = loadConfiguration()
-            val db = configureTestDatabase(config)
-            val feedRepository = FeedRepositoryImpl(db)
-
+            val feedRepository = getKoin().get<FeedRepository>()
             addTestData(feedRepository)
 
-            configureRouting(feedRepository)
+            // Configure routing
+            configureRouting()
         }
 
         return createClient {
