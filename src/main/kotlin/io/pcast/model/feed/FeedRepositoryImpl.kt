@@ -89,17 +89,19 @@ class FeedRepositoryImpl(
             } ?: throw FeedNotFoundException()
         }
 
-    override fun delete(id: UUID) = attemptWithoutResponse {
-        transaction(db) {
-            FeedsTable.deleteWhere { FeedsTable.id eq id }
+    override fun delete(id: UUID) =
+        attemptWithoutResponse {
+            transaction(db) {
+                FeedsTable.deleteWhere { FeedsTable.id eq id }
+            }
         }
-    }
 
-    private fun mapRow(row: ResultRow) = Feed(
-        id = row[FeedsTable.id].value,
-        nanoId = row[FeedsTable.nanoId],
-        title = row[FeedsTable.title],
-        url = row[FeedsTable.url],
-        synchronizedAt = row[FeedsTable.synchronizedAt],
-    )
+    private fun mapRow(row: ResultRow) =
+        Feed(
+            id = row[FeedsTable.id].value,
+            nanoId = row[FeedsTable.nanoId],
+            title = row[FeedsTable.title],
+            url = row[FeedsTable.url],
+            synchronizedAt = row[FeedsTable.synchronizedAt],
+        )
 }

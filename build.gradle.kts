@@ -14,7 +14,6 @@ plugins {
     id("io.ktor.plugin") version "3.2.1"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     id("com.diffplug.spotless") version "7.1.0"
-    id("org.ajoberstar.grgit") version "5.3.2"
 }
 
 group = "io.pcast"
@@ -74,8 +73,4 @@ dependencies {
 
     implementation("io.github.pdvrieze.xmlutil:core-jdk:$xmlUtilVersion")
     implementation("io.github.pdvrieze.xmlutil:serialization-jvm:$xmlUtilVersion")
-}
-
-tasks.register("git:add") {
-    grgit.add()
 }

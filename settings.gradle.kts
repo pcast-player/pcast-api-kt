@@ -8,7 +8,7 @@ plugins {
 gitHooks {
     commitMsg { conventionalCommits() }
     preCommit {
-        tasks("spotlessApply", "git:add")
+        tasks("spotlessApply")
     }
-    createHooks()
+    createHooks(true)
 }
