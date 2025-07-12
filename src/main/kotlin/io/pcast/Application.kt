@@ -21,7 +21,6 @@ fun main() {
 
 @OptIn(ExperimentalXmlUtilApi::class)
 fun Application.module() {
-    // Install Koin
     install(Koin) {
         slf4jLogger()
         modules(appModule)

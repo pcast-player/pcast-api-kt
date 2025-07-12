@@ -167,7 +167,6 @@ internal class FeedRouterTest : KoinTest {
             val feedRepository = getKoin().get<FeedRepository>()
             addTestData(feedRepository)
 
-            // Configure routing
             configureRouting()
         }
 
