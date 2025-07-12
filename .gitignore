@@ -36,3 +36,5 @@ out/
 .vscode/
 
 *.opml
+
+src/main/resources/app.*.conf
