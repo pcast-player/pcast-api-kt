@@ -11,17 +11,17 @@ import org.koin.dsl.module
 
 val configModule =
     module {
-        single { loadConfiguration() }
+        single(createdAtStart = true) { loadConfiguration() }
     }
 
 val dbModule =
     module {
-        single { configureDatabase(get()) }
+        single(createdAtStart = true) { configureDatabase(get()) }
     }
 
 val testDbModule =
     module {
-        single { configureTestDatabase(get()) }
+        single(createdAtStart = true) { configureTestDatabase(get()) }
     }
 
 val appModule =
