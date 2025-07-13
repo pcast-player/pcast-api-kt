@@ -1,12 +1,12 @@
 package io.pcast.di
 
 import io.pcast.config.loadConfiguration
-import io.pcast.controller.feed.FeedHandler
-import io.pcast.controller.sync.SyncHandler
 import io.pcast.model.feed.FeedRepository
 import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureTestDatabase
+import io.pcast.service.feed.FeedService
+import io.pcast.service.sync.SyncService
 import org.koin.dsl.module
 
 val configModule =
@@ -28,6 +28,6 @@ val appModule =
     module {
         single<FeedRepository> { FeedRepositoryImpl(get()) }
 
-        single { FeedHandler(get()) }
-        single { SyncHandler() }
+        single { FeedService(get()) }
+        single { SyncService() }
     }

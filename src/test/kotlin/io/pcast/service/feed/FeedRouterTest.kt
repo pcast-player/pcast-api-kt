@@ -1,4 +1,4 @@
-package io.pcast.controller.feed
+package io.pcast.service.feed
 
 import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
@@ -61,7 +61,7 @@ internal class FeedRouterTest : KoinTest {
 
             client.get("/api/feeds").apply {
                 assertEquals(HttpStatusCode.OK, status)
-                assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
+                assertEquals(FEEDS.map(::FeedViewModel), body<List<FeedViewModel>>())
             }
         }
 
@@ -70,11 +70,11 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val client = configureServerAndGetClient()
             val feed = FEEDS.first()
-            val response = FeedResponse(feed)
+            val response = FeedViewModel(feed)
 
             client.get("/api/feeds/${feed.nanoId}").apply {
                 assertEquals(HttpStatusCode.OK, status)
-                assertEquals(response, body<FeedResponse>())
+                assertEquals(response, body<FeedViewModel>())
             }
         }
 
@@ -113,7 +113,7 @@ internal class FeedRouterTest : KoinTest {
                 }.apply {
                     assertEquals(HttpStatusCode.Created, status)
 
-                    val response = body<FeedResponse>()
+                    val response = body<FeedViewModel>()
 
                     assertEquals(title, response.title)
                     assertEquals(url, response.url)
@@ -139,7 +139,7 @@ internal class FeedRouterTest : KoinTest {
             client.get("/api/feeds/${feed.nanoId}").apply {
                 assertEquals(HttpStatusCode.OK, status)
 
-                val response = body<FeedResponse>()
+                val response = body<FeedViewModel>()
 
                 assertEquals(newTitle, response.title)
             }

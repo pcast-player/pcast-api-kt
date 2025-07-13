@@ -1,11 +1,11 @@
-package io.pcast.controller.sync
+package io.pcast.service.sync
 
 import cash.z.ecc.android.bip39.Mnemonics
 import cash.z.ecc.android.bip39.toSeed
 import io.pcast.extensions.humanReadableWords
 import io.pcast.result.attempt
 
-class SyncHandler {
+class SyncService {
     fun createSyncPhrase() =
         attempt {
             Mnemonics
