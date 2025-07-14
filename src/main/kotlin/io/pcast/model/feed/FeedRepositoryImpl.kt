@@ -15,10 +15,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.UUID
 
+private const val VARCHAR_MAX_LENGTH = 255
+
 object FeedsTable : UUIDTable("feeds") {
     val nanoId = char("nano_id", NANO_ID_LENGTH)
-    val title = varchar("title", 255)
-    val url = varchar("url", 255)
+    val title = varchar("title", VARCHAR_MAX_LENGTH)
+    val url = varchar("url", VARCHAR_MAX_LENGTH)
     val synchronizedAt = datetime("synchronized_at").nullable()
 }
 

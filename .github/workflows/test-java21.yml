@@ -1,4 +1,4 @@
-name: Java 24
+name: Java 21
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        java-version: [ '24' ]
+        java-version: [ '21' ]
 
     steps:
       - name: Checkout repository
@@ -35,6 +35,12 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Run Detekt
+        run: ./gradlew detekt
+
+      - name: Run Spotless with ktlint
+        run: ./gradlew spotlessCheck
 
       - name: Build with Gradle
         run: ./gradlew build
