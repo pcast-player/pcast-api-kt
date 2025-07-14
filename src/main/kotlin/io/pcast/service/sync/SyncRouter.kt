@@ -37,4 +37,14 @@ fun Route.registerSyncRoutes() {
             call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseViewModel(false))
         }
     }
+
+    get("/sync/friendly-id") {
+        attempt {
+            val friendlyId = service.createFriendlyId().unwrap()
+
+            call.respond(HttpStatusCode.Created, FriendlyIdViewModel(friendlyId))
+        } or {
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
 }
