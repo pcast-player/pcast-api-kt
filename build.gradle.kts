@@ -1,3 +1,5 @@
+import io.gitlab.arturbosch.detekt.Detekt
+
 val kotlinVersion: String by project
 val logbackVersion: String by project
 val ktorVersion: String by project
@@ -15,6 +17,7 @@ plugins {
     id("io.ktor.plugin") version "3.2.1"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     id("com.diffplug.spotless") version "7.1.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "io.pcast"
@@ -30,6 +33,20 @@ application {
 spotless {
     kotlin {
         ktlint().setEditorConfigPath("$projectDir/.editorconfig")
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$projectDir/config/detekt/detekt.yml")
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports {
+        xml.required.set(false)
+        html.required.set(false)
+        sarif.required.set(false)
+        md.required.set(true)
     }
 }
 
