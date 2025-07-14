@@ -8,6 +8,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -59,7 +60,7 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val client = configureServerAndGetClient()
 
-            client.get("/api/feeds").apply {
+            client.get("/api/feeds").expect {
                 assertEquals(HttpStatusCode.OK, status)
                 assertEquals(FEEDS.map(::FeedViewModel), body<List<FeedViewModel>>())
             }
@@ -72,7 +73,7 @@ internal class FeedRouterTest : KoinTest {
             val feed = FEEDS.first()
             val response = FeedViewModel(feed)
 
-            client.get("/api/feeds/${feed.nanoId}").apply {
+            client.get("/api/feeds/${feed.nanoId}").expect {
                 assertEquals(HttpStatusCode.OK, status)
                 assertEquals(response, body<FeedViewModel>())
             }
@@ -84,7 +85,7 @@ internal class FeedRouterTest : KoinTest {
             val client = configureServerAndGetClient()
             val uuid = Generators.timeBasedGenerator().generate()
 
-            client.get("/api/feeds/$uuid").apply {
+            client.get("/api/feeds/$uuid").expect {
                 assertEquals(HttpStatusCode.NotFound, status)
             }
         }
@@ -94,7 +95,7 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val client = configureServerAndGetClient()
 
-            client.get("/api/feeds/fdsfsdf").apply {
+            client.get("/api/feeds/fdsfsdf").expect {
                 assertEquals(HttpStatusCode.NotFound, status)
             }
         }
@@ -110,7 +111,7 @@ internal class FeedRouterTest : KoinTest {
                 .post("/api/feeds") {
                     header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     setBody(FeedRequest(title, url))
-                }.apply {
+                }.expect {
                     assertEquals(HttpStatusCode.Created, status)
 
                     val response = body<FeedViewModel>()
@@ -132,11 +133,11 @@ internal class FeedRouterTest : KoinTest {
                 .put("/api/feeds/${feed.nanoId}") {
                     header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     setBody(FeedRequest(newTitle, feed.url))
-                }.apply {
+                }.expect {
                     assertEquals(HttpStatusCode.NoContent, status)
                 }
 
-            client.get("/api/feeds/${feed.nanoId}").apply {
+            client.get("/api/feeds/${feed.nanoId}").expect {
                 assertEquals(HttpStatusCode.OK, status)
 
                 val response = body<FeedViewModel>()
@@ -144,6 +145,8 @@ internal class FeedRouterTest : KoinTest {
                 assertEquals(newTitle, response.title)
             }
         }
+
+    private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {

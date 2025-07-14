@@ -19,7 +19,7 @@ sealed class Result<out V : Any?, out E : Exception> {
 
         fun <E : Exception> error(error: E): Result<Nothing, E> = Err(error)
 
-        fun error(): Err<Exception> = Err(Exception())
+        fun error(): Err<Exception> = Err(Exception("Unknown error"))
     }
 }
 
@@ -30,7 +30,7 @@ open class Ok<out V : Any?>(
 
     override fun get(): V = value
 
-    override fun error() = throw IllegalArgumentException()
+    override fun error() = throw IllegalArgumentException("Ok is not an error")
 
     override fun toString() = "Ok: $value"
 
@@ -65,7 +65,7 @@ open class Err<out E : Exception>(
     }
 }
 
-object EmptyErr : Err<Exception>(Exception())
+object EmptyErr : Err<Exception>(Exception("Empty error"))
 
 infix fun <V : Any?, E : Exception> Result<V, E>.or(fallback: V) = if (isOk()) value else fallback
 
