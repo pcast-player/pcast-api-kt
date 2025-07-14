@@ -8,7 +8,7 @@ plugins {
 gitHooks {
     commitMsg { conventionalCommits() }
     preCommit {
-        tasks("spotlessApply")
+        tasks("detekt", "spotlessCheck")
     }
     createHooks(true)
 }
