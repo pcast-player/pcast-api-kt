@@ -29,6 +29,7 @@ import io.pcast.model.feed.FeedRepository
 import io.pcast.plugins.configureRouting
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
+import org.koin.test.inject
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -55,6 +56,8 @@ private val FEEDS =
     }
 
 internal class FeedRouterTest : KoinTest {
+    private val feedRepository by inject<FeedRepository>()
+
     @Test
     fun testGetFeeds() =
         testApplication {
@@ -172,8 +175,6 @@ internal class FeedRouterTest : KoinTest {
     }
 
     private fun addTestData() {
-        val feedRepository = getKoin().get<FeedRepository>()
-
         for (feed in FEEDS) {
             feedRepository.save(feed)
         }
