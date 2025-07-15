@@ -3,12 +3,12 @@ package io.pcast.helpers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class HelpersTest {
+internal class MapTest {
     @Test
     fun testBuildMutableMap() {
         // Create a map using buildMutableMap
         val map =
-            buildMutableMap<String, Int> {
+            buildMutableMap {
                 put("one", 1)
                 put("two", 2)
                 put("three", 3)
