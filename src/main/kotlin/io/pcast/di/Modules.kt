@@ -1,6 +1,9 @@
 package io.pcast.di
 
-import io.pcast.config.loadConfiguration
+import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.addResourceSource
+import io.pcast.config.CONFIG_FILES
+import io.pcast.config.Configuration
 import io.pcast.model.feed.FeedRepository
 import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureDatabase
@@ -11,7 +14,7 @@ import org.koin.dsl.module
 
 val configModule =
     module {
-        single(createdAtStart = true) { loadConfiguration() }
+        single(createdAtStart = true) { buildConfigurationFromFiles() }
     }
 
 val dbModule =
@@ -31,3 +34,21 @@ val appModule =
         single { FeedService(get()) }
         single { SyncService() }
     }
+
+private fun buildConfigurationFromFiles() =
+    buildConfiguration<Configuration> {
+        for (file in CONFIG_FILES) {
+            addResourceSource(
+                resource = file.relativeResourcePath,
+                optional = file.isOptional,
+                allowEmpty = file.allowEmpty,
+            )
+        }
+    }
+
+private inline fun <reified T : Any> buildConfiguration(builder: ConfigLoaderBuilder.() -> Unit) =
+    ConfigLoaderBuilder
+        .default()
+        .apply(builder)
+        .build()
+        .loadConfigOrThrow<T>()
