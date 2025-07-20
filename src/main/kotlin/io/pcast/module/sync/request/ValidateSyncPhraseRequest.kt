@@ -1,4 +1,4 @@
-package io.pcast.service.sync
+package io.pcast.module.sync.request
 
 import kotlinx.serialization.Serializable
 

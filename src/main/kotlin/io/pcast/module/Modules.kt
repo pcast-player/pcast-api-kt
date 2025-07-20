@@ -1,14 +1,14 @@
-package io.pcast.di
+package io.pcast.module
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
 import io.pcast.config.CONFIG_FILES
 import io.pcast.config.Configuration
-import io.pcast.model.feed.FeedRepository
+import io.pcast.module.feed.FeedService
+import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.sync.SyncService
 import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureTestDatabase
-import io.pcast.service.feed.FeedService
-import io.pcast.service.sync.SyncService
 import org.koin.dsl.module
 
 val configModule =

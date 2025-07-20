@@ -1,9 +1,8 @@
-
-package io.pcast.service.feed.opml
+package io.pcast.module.feed.opml
 
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
-import io.pcast.model.feed.Feed
+import io.pcast.module.feed.model.Feed
 import kotlinx.serialization.Serializable
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName

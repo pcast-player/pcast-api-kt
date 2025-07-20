@@ -1,8 +1,8 @@
-package io.pcast.service.feed
+package io.pcast.module.feed.request
 
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
-import io.pcast.model.feed.Feed
+import io.pcast.module.feed.model.Feed
 import kotlinx.serialization.Serializable
 import java.util.UUID
 

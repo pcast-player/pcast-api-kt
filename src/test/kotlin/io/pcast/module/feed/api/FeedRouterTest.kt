@@ -1,4 +1,4 @@
-package io.pcast.service.feed
+package io.pcast.module.feed.api
 
 import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
@@ -18,14 +18,16 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.di.appModule
-import io.pcast.di.configModule
-import io.pcast.di.testDbModule
 import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
-import io.pcast.model.feed.Feed
-import io.pcast.model.feed.FeedRepository
+import io.pcast.module.appModule
+import io.pcast.module.configModule
+import io.pcast.module.feed.model.Feed
+import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.feed.request.FeedRequest
+import io.pcast.module.feed.response.FeedResponse
+import io.pcast.module.testDbModule
 import io.pcast.plugins.configureError
 import io.pcast.plugins.configureRouting
 import org.koin.ktor.plugin.Koin
@@ -66,7 +68,7 @@ internal class FeedRouterTest : KoinTest {
 
             client.get("/api/feeds").expect {
                 assertEquals(HttpStatusCode.OK, status)
-                assertEquals(FEEDS.map(::FeedViewModel), body<List<FeedViewModel>>())
+                assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
             }
         }
 
@@ -75,11 +77,11 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val client = configureServerAndGetClient()
             val feed = FEEDS.first()
-            val response = FeedViewModel(feed)
+            val response = FeedResponse(feed)
 
             client.get("/api/feeds/${feed.nanoId}").expect {
                 assertEquals(HttpStatusCode.OK, status)
-                assertEquals(response, body<FeedViewModel>())
+                assertEquals(response, body<FeedResponse>())
             }
         }
 
@@ -118,7 +120,7 @@ internal class FeedRouterTest : KoinTest {
                 }.expect {
                     assertEquals(HttpStatusCode.Created, status)
 
-                    val response = body<FeedViewModel>()
+                    val response = body<FeedResponse>()
 
                     assertEquals(title, response.title)
                     assertEquals(url, response.url)
@@ -144,7 +146,7 @@ internal class FeedRouterTest : KoinTest {
             client.get("/api/feeds/${feed.nanoId}").expect {
                 assertEquals(HttpStatusCode.OK, status)
 
-                val response = body<FeedViewModel>()
+                val response = body<FeedResponse>()
 
                 assertEquals(newTitle, response.title)
             }

@@ -1,8 +1,9 @@
-package io.pcast.service.feed
+package io.pcast.module.feed
 
-import io.pcast.model.feed.Feed
-import io.pcast.model.feed.FeedRepository
-import io.pcast.service.feed.opml.OpmlFile
+import io.pcast.module.feed.model.Feed
+import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.feed.opml.OpmlFile
+import io.pcast.module.feed.request.FeedRequest
 
 class FeedService(
     private val repository: FeedRepository,

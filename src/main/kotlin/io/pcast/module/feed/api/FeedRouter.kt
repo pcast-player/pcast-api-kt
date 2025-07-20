@@ -1,4 +1,4 @@
-package io.pcast.service.feed
+package io.pcast.module.feed.api
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -9,7 +9,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.pcast.error.AbortError
 import io.pcast.error.HttpError
-import io.pcast.service.feed.opml.OpmlFile
+import io.pcast.module.feed.FeedService
+import io.pcast.module.feed.opml.OpmlFile
+import io.pcast.module.feed.request.FeedRequest
+import io.pcast.module.feed.response.FeedResponse
 import org.koin.ktor.ext.inject
 
 fun Route.registerFeedRoutes() {
@@ -19,7 +22,7 @@ fun Route.registerFeedRoutes() {
         val feeds = service.getFeeds()
 
         if (!feeds.isEmpty()) {
-            call.respond(feeds.map(::FeedViewModel))
+            call.respond(feeds.map(::FeedResponse))
         } else {
             throw AbortError(HttpError.NoContent, "No feeds found.")
         }
@@ -30,7 +33,7 @@ fun Route.registerFeedRoutes() {
             val request = call.receive<FeedRequest>()
             val feed = service.addFeed(request)
 
-            call.respond(HttpStatusCode.Created, FeedViewModel(feed))
+            call.respond(HttpStatusCode.Created, FeedResponse(feed))
         } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }
@@ -42,7 +45,7 @@ fun Route.registerFeedRoutes() {
         try {
             val feed = service.getFeed(id)
 
-            call.respond(FeedViewModel(feed))
+            call.respond(FeedResponse(feed))
         } catch (_: Throwable) {
             throw AbortError(HttpError.NotFound, "No food found for ID $id")
         }
@@ -65,7 +68,7 @@ fun Route.registerFeedRoutes() {
         val request = call.receive<OpmlFile>()
 
         try {
-            val feeds = service.addFeeds(request).map(::FeedViewModel)
+            val feeds = service.addFeeds(request).map(::FeedResponse)
 
             call.respond(HttpStatusCode.Created, feeds)
         } catch (_: Throwable) {

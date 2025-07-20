@@ -1,4 +1,4 @@
-package io.pcast.service.sync
+package io.pcast.module.sync
 
 import cash.z.ecc.android.bip39.Mnemonics
 import cash.z.ecc.android.bip39.toSeed

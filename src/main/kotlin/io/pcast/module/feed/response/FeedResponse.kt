@@ -1,6 +1,6 @@
-package io.pcast.service.feed
+package io.pcast.module.feed.response
 
-import io.pcast.model.feed.Feed
+import io.pcast.module.feed.model.Feed
 import io.pcast.serializer.LocalDateTimeSerializer
 import io.pcast.serializer.UuidSerializer
 import kotlinx.serialization.Serializable
@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Serializable
-data class FeedViewModel(
+data class FeedResponse(
     @Serializable(with = UuidSerializer::class)
     val id: UUID,
     val nanoId: String,

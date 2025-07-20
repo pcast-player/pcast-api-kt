@@ -1,8 +1,8 @@
-package io.pcast.service.sync
+package io.pcast.module.sync.response
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ValidateSyncPhraseViewModel(
+data class ValidateSyncPhraseResponse(
     val isValid: Boolean,
 )

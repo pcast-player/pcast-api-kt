@@ -3,6 +3,6 @@ package io.pcast.error
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ErrorViewModel(
+data class ErrorResponse(
     val message: String,
 )

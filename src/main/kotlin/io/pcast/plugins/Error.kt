@@ -5,12 +5,12 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.pcast.error.AbortError
-import io.pcast.error.ErrorViewModel
+import io.pcast.error.ErrorResponse
 
 fun Application.configureError() {
     install(StatusPages) {
         exception<AbortError> { call, cause ->
-            val response = ErrorViewModel(message = cause.details)
+            val response = ErrorResponse(message = cause.details)
 
             call.respond(cause.code.statusCode, response)
         }

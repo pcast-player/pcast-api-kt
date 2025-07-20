@@ -1,6 +1,7 @@
-package io.pcast.model.feed
+package io.pcast.module.feed.model
 
 import io.pcast.helpers.NANO_ID_LENGTH
+import io.pcast.module.feed.error.FeedNotFoundError
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -71,7 +72,7 @@ class FeedRepository(
                 .where { FeedsTable.id eq id }
                 .map(::mapRow)
                 .singleOrNull()
-        } ?: throw FeedNotFoundException()
+        } ?: throw FeedNotFoundError()
 
     fun findByNanoId(nanoId: String) =
         transaction(db) {
@@ -80,7 +81,7 @@ class FeedRepository(
                 .where { FeedsTable.nanoId eq nanoId }
                 .map(::mapRow)
                 .singleOrNull()
-        } ?: throw FeedNotFoundException()
+        } ?: throw FeedNotFoundError()
 
     fun delete(id: UUID) {
         transaction(db) {

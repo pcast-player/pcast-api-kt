@@ -1,4 +1,4 @@
-package io.pcast.service.sync
+package io.pcast.module.sync.api
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -6,6 +6,11 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.pcast.module.sync.SyncService
+import io.pcast.module.sync.request.ValidateSyncPhraseRequest
+import io.pcast.module.sync.response.CreateSyncCodeResponse
+import io.pcast.module.sync.response.FriendlyIdResponse
+import io.pcast.module.sync.response.ValidateSyncPhraseResponse
 import org.koin.ktor.ext.inject
 
 fun Route.registerSyncRoutes() {
@@ -15,7 +20,7 @@ fun Route.registerSyncRoutes() {
         try {
             val syncCode = service.createSyncPhrase()
 
-            call.respond(HttpStatusCode.Created, CreateSyncCodeViewModel(syncCode))
+            call.respond(HttpStatusCode.Created, CreateSyncCodeResponse(syncCode))
         } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }
@@ -28,9 +33,9 @@ fun Route.registerSyncRoutes() {
 
             service.getSeedFromSyncPhrase(phrase)
 
-            call.respond(ValidateSyncPhraseViewModel(true))
+            call.respond(ValidateSyncPhraseResponse(true))
         } catch (_: Throwable) {
-            call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseViewModel(false))
+            call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseResponse(false))
         }
     }
 
@@ -38,7 +43,7 @@ fun Route.registerSyncRoutes() {
         try {
             val friendlyId = service.createFriendlyId()
 
-            call.respond(HttpStatusCode.Created, FriendlyIdViewModel(friendlyId))
+            call.respond(HttpStatusCode.Created, FriendlyIdResponse(friendlyId))
         } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }

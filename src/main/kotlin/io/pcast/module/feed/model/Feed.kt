@@ -1,4 +1,4 @@
-package io.pcast.model.feed
+package io.pcast.module.feed.model
 
 import java.time.LocalDateTime
 import java.util.UUID
