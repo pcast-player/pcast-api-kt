@@ -61,6 +61,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-xml-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-status-pages")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
@@ -98,4 +99,6 @@ dependencies {
     implementation("io.insert-koin:koin-logger-slf4j:$koinVersion")
     testImplementation("io.insert-koin:koin-test:$koinVersion")
     testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
+
+    implementation("io.github.serpro69:kotlin-faker:1.16.0")
 }

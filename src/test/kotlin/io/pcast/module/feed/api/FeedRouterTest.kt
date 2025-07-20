@@ -1,0 +1,185 @@
+package io.pcast.module.feed.api
+
+import com.fasterxml.uuid.Generators
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.xml.xml
+import io.ktor.server.application.install
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.testApplication
+import io.pcast.extensions.minusDays
+import io.pcast.helpers.generateNanoId
+import io.pcast.helpers.generateUuidV7
+import io.pcast.module.appModule
+import io.pcast.module.configModule
+import io.pcast.module.feed.model.Feed
+import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.feed.request.FeedRequest
+import io.pcast.module.feed.response.FeedResponse
+import io.pcast.module.testDbModule
+import io.pcast.plugins.configureError
+import io.pcast.plugins.configureRouting
+import org.koin.ktor.plugin.Koin
+import org.koin.test.KoinTest
+import org.koin.test.inject
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
+
+private val BASE_DATE = LocalDateTime.now()
+
+private fun feed(i: Int) =
+    Feed(
+        id = generateUuidV7(),
+        nanoId = generateNanoId(),
+        title = "Feed $i",
+        url = "https://rss.pcast.io/news$i.rss",
+        synchronizedAt = BASE_DATE.minusDays(i).truncatedTo(ChronoUnit.SECONDS),
+    )
+
+private val FEEDS =
+    buildList {
+        for (i in 1..10) {
+            add(feed(i))
+        }
+    }
+
+internal class FeedRouterTest : KoinTest {
+    private val feedRepository by inject<FeedRepository>()
+
+    @Test
+    fun testGetFeeds() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client.get("/api/feeds").expect {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
+            }
+        }
+
+    @Test
+    fun testGetFeed() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val feed = FEEDS.first()
+            val response = FeedResponse(feed)
+
+            client.get("/api/feeds/${feed.nanoId}").expect {
+                assertEquals(HttpStatusCode.OK, status)
+                assertEquals(response, body<FeedResponse>())
+            }
+        }
+
+    @Test
+    fun testGetFeedFailsWithUnknownId() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val uuid = Generators.timeBasedGenerator().generate()
+
+            client.get("/api/feeds/$uuid").expect {
+                assertEquals(HttpStatusCode.NotFound, status)
+            }
+        }
+
+    @Test
+    fun testGetFeedFailsWithWrongIdType() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client.get("/api/feeds/fdsfsdf").expect {
+                assertEquals(HttpStatusCode.NotFound, status)
+            }
+        }
+
+    @Test
+    fun testCreateFeed() =
+        testApplication {
+            val title = "title"
+            val url = "https://foo.bar"
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/feeds") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(FeedRequest(title, url))
+                }.expect {
+                    assertEquals(HttpStatusCode.Created, status)
+
+                    val response = body<FeedResponse>()
+
+                    assertEquals(title, response.title)
+                    assertEquals(url, response.url)
+                    assertNull(response.synchronizedAt)
+                }
+        }
+
+    @Test
+    fun testUpdateFeed() =
+        testApplication {
+            val feed = FEEDS.first()
+            val newTitle = "new title"
+            val client = configureServerAndGetClient()
+
+            client
+                .put("/api/feeds/${feed.nanoId}") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(FeedRequest(newTitle, feed.url))
+                }.expect {
+                    assertEquals(HttpStatusCode.NoContent, status)
+                }
+
+            client.get("/api/feeds/${feed.nanoId}").expect {
+                assertEquals(HttpStatusCode.OK, status)
+
+                val response = body<FeedResponse>()
+
+                assertEquals(newTitle, response.title)
+            }
+        }
+
+    private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
+
+    private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
+        application {
+            install(Koin) {
+                modules(configModule, testDbModule, appModule)
+            }
+
+            install(ContentNegotiation) {
+                json()
+            }
+
+            addTestData()
+            configureRouting()
+            configureError()
+        }
+
+        return createClient {
+            install(ClientContentNegotiation) {
+                json()
+                xml()
+            }
+        }
+    }
+
+    private fun addTestData() {
+        for (feed in FEEDS) {
+            feedRepository.save(feed)
+        }
+    }
+}
