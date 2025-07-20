@@ -26,6 +26,7 @@ import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
+import io.pcast.plugins.configureError
 import io.pcast.plugins.configureRouting
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
@@ -162,8 +163,8 @@ internal class FeedRouterTest : KoinTest {
             }
 
             addTestData()
-
             configureRouting()
+            configureError()
         }
 
         return createClient {

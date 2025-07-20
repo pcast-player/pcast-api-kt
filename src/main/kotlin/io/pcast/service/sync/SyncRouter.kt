@@ -6,44 +6,40 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import io.pcast.result.attempt
-import io.pcast.result.or
-import io.pcast.result.unwrap
 import org.koin.ktor.ext.inject
 
 fun Route.registerSyncRoutes() {
     val service by inject<SyncService>()
 
     get("/sync/phrase") {
-        attempt {
-            val syncCode = service.createSyncPhrase().unwrap()
-            val response = CreateSyncCodeViewModel(syncCode)
+        try {
+            val syncCode = service.createSyncPhrase()
 
-            call.respond(HttpStatusCode.Created, response)
-        } or {
+            call.respond(HttpStatusCode.Created, CreateSyncCodeViewModel(syncCode))
+        } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
     post("/sync/phrase") {
-        attempt {
+        try {
             val request = call.receive<ValidateSyncPhraseRequest>()
             val phrase = request.syncPhrase.toCharArray()
 
-            service.getSeedFromSyncPhrase(phrase).unwrap()
+            service.getSeedFromSyncPhrase(phrase)
 
             call.respond(ValidateSyncPhraseViewModel(true))
-        } or {
+        } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError, ValidateSyncPhraseViewModel(false))
         }
     }
 
     get("/sync/friendly-id") {
-        attempt {
-            val friendlyId = service.createFriendlyId().unwrap()
+        try {
+            val friendlyId = service.createFriendlyId()
 
             call.respond(HttpStatusCode.Created, FriendlyIdViewModel(friendlyId))
-        } or {
+        } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }

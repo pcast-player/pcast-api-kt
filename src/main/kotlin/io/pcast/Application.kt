@@ -10,6 +10,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.pcast.di.appModule
 import io.pcast.di.configModule
 import io.pcast.di.dbModule
+import io.pcast.plugins.configureError
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRouting
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
@@ -35,4 +36,5 @@ fun Application.module() {
 
     configureRouting()
     configureMonitoring()
+    configureError()
 }

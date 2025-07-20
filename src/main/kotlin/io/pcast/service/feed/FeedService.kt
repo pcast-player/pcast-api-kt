@@ -2,7 +2,6 @@ package io.pcast.service.feed
 
 import io.pcast.model.feed.Feed
 import io.pcast.model.feed.FeedRepository
-import io.pcast.result.Result
 import io.pcast.service.feed.opml.OpmlFile
 
 class FeedService(
@@ -12,15 +11,15 @@ class FeedService(
 
     fun getFeed(nanoId: String) = repository.findByNanoId(nanoId)
 
-    fun addFeed(request: FeedRequest): Result<Feed, Exception> {
+    fun addFeed(request: FeedRequest): Feed {
         val feed = request.toModel()
 
         repository.save(feed)
 
-        return Result.ok(feed)
+        return feed
     }
 
-    fun addFeeds(opmlFile: OpmlFile): Result<List<Feed>, Exception> {
+    fun addFeeds(opmlFile: OpmlFile): List<Feed> {
         val feeds =
             buildList {
                 for (outline in opmlFile.body.outlines) {
@@ -30,7 +29,7 @@ class FeedService(
                 }
             }
 
-        return Result.ok(feeds)
+        return feeds
     }
 
     fun updateFeed(

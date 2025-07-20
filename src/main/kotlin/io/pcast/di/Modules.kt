@@ -5,7 +5,6 @@ import com.sksamuel.hoplite.addResourceSource
 import io.pcast.config.CONFIG_FILES
 import io.pcast.config.Configuration
 import io.pcast.model.feed.FeedRepository
-import io.pcast.model.feed.FeedRepositoryImpl
 import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureTestDatabase
 import io.pcast.service.feed.FeedService
@@ -29,7 +28,7 @@ val testDbModule =
 
 val appModule =
     module {
-        single<FeedRepository> { FeedRepositoryImpl(get()) }
+        single<FeedRepository> { FeedRepository(get()) }
 
         single { FeedService(get()) }
         single { SyncService() }

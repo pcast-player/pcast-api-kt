@@ -7,9 +7,8 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
-import io.pcast.result.attempt
-import io.pcast.result.or
-import io.pcast.result.unwrap
+import io.pcast.error.AbortError
+import io.pcast.error.HttpError
 import io.pcast.service.feed.opml.OpmlFile
 import org.koin.ktor.ext.inject
 
@@ -17,67 +16,60 @@ fun Route.registerFeedRoutes() {
     val service by inject<FeedService>()
 
     get("/feeds") {
-        attempt {
-            val result = service.getFeeds()
-            val feeds = result.unwrap(::FeedViewModel)
+        val feeds = service.getFeeds()
 
-            call.respond(feeds)
-        } or {
-            call.respond(HttpStatusCode.NoContent)
+        if (!feeds.isEmpty()) {
+            call.respond(feeds.map(::FeedViewModel))
+        } else {
+            throw AbortError(HttpError.NoContent, "No feeds found.")
         }
     }
 
     post("/feeds") {
-        attempt {
+        try {
             val request = call.receive<FeedRequest>()
-            val result = service.addFeed(request)
-            val feed = result.unwrap(::FeedViewModel)
+            val feed = service.addFeed(request)
 
-            call.respond(HttpStatusCode.Created, feed)
-        } or {
+            call.respond(HttpStatusCode.Created, FeedViewModel(feed))
+        } catch (_: Throwable) {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
     get("/feeds/{id}") {
-        attempt {
-            val id = call.parameters["id"]
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
 
-            requireNotNull(id) { "Feed ID must be provided" }
+        try {
+            val feed = service.getFeed(id)
 
-            val result = service.getFeed(id)
-            val feed = result.unwrap(::FeedViewModel)
-
-            call.respond(feed)
-        } or {
-            call.respond(HttpStatusCode.NotFound)
+            call.respond(FeedViewModel(feed))
+        } catch (_: Throwable) {
+            throw AbortError(HttpError.NotFound, "No food found for ID $id")
         }
     }
 
     put("/feeds/{id}") {
-        attempt {
-            val id = call.parameters["id"]
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
+        val request = call.receive<FeedRequest>()
 
-            requireNotNull(id) { "Feed ID must be provided" }
-
-            val request = call.receive<FeedRequest>()
-
+        try {
             service.updateFeed(id, request)
 
             call.respond(HttpStatusCode.NoContent)
-        } or {
-            call.respond(HttpStatusCode.NotFound)
+        } catch (_: Throwable) {
+            throw AbortError(HttpError.NotFound, "No food found for ID $id")
         }
     }
 
     post("/feeds/opml") {
-        attempt {
-            val request = call.receive<OpmlFile>()
-            val feeds = service.addFeeds(request).unwrap(::FeedViewModel)
+        val request = call.receive<OpmlFile>()
+
+        try {
+            val feeds = service.addFeeds(request).map(::FeedViewModel)
 
             call.respond(HttpStatusCode.Created, feeds)
-        } or {
-            call.respond(HttpStatusCode.InternalServerError)
+        } catch (_: Throwable) {
+            throw AbortError(HttpError.InternalError, "OPML import failed")
         }
     }
 }
