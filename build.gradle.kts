@@ -13,7 +13,7 @@ val xmlUtilVersion: String by project
 val koinVersion: String by project
 
 plugins {
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm") version "2.2.20"
     id("io.ktor.plugin") version "3.3.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     id("com.diffplug.spotless") version "7.2.1"
