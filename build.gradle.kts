@@ -16,7 +16,7 @@ plugins {
     kotlin("jvm") version "2.2.21"
     id("io.ktor.plugin") version "3.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
-    id("com.diffplug.spotless") version "7.2.1"
+    id("com.diffplug.spotless") version "8.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
