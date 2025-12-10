@@ -64,7 +64,7 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("com.fasterxml.uuid:java-uuid-generator:5.1.1")
+    implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
     // Exposed + database drivers
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
