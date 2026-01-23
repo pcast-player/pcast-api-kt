@@ -18,7 +18,11 @@ import org.koin.dsl.module
 
 val configModule =
     module {
-        single(createdAtStart = true) { buildConfigurationFromFiles() }
+        single(createdAtStart = true) {
+            buildConfigurationFromFiles().also { config ->
+                validateJwtSecret(config.jwt.secret)
+            }
+        }
     }
 
 val dbModule =
@@ -60,3 +64,12 @@ private inline fun <reified T : Any> buildConfiguration(builder: ConfigLoaderBui
         .apply(builder)
         .build()
         .loadConfigOrThrow<T>()
+
+private fun validateJwtSecret(secret: String) {
+    require(secret.isNotBlank()) {
+        "JWT secret must not be blank. Please configure a valid secret in your configuration file."
+    }
+    require(secret.length >= 32) {
+        "JWT secret must be at least 32 characters long for security. Current length: ${secret.length}"
+    }
+}
