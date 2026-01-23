@@ -1,7 +1,6 @@
 package io.pcast.module.auth
 
 import io.pcast.module.auth.model.UserRepository
-import org.jetbrains.exposed.v1.jdbc.Database
 
 /**
  * Utility for seeding users into the database.

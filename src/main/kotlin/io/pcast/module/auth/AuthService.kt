@@ -1,24 +1,31 @@
 package io.pcast.module.auth
 
 import at.favre.lib.crypto.bcrypt.BCrypt
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import io.pcast.config.Configuration
+import io.pcast.extensions.jwt
+import io.pcast.extensions.withExpiresIn
 import io.pcast.module.auth.model.RefreshTokenRepository
 import io.pcast.module.auth.model.User
 import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.auth.response.TokenResponse
 import java.security.MessageDigest
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.UUID
+
+private const val CLAIM_USER_ID = "userId"
+private const val CLAIM_EMAIL = "email"
+private const val BCRYPT_COST = 12
+private const val SECONDS_PER_MINUTE = 60L
+private const val DIGEST_ALGORITHM = "SHA-256"
 
 class AuthService(
     private val config: Configuration,
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
 ) {
+    private val hasher = BCrypt.withDefaults()
+    private val verifier = BCrypt.verifyer()
+
     fun login(
         email: String,
         password: String,
@@ -46,6 +53,7 @@ class AuthService(
 
     fun logout(refreshToken: String): Boolean {
         val tokenHash = hashToken(refreshToken)
+
         return refreshTokenRepository.deleteByTokenHash(tokenHash)
     }
 
@@ -65,22 +73,15 @@ class AuthService(
         )
     }
 
-    private fun generateAccessToken(user: User): String {
-        val expiresAt =
-            Instant.now().plusSeconds(
-                config.jwt.accessTokenExpireMinutes * SECONDS_PER_MINUTE,
-            )
-
-        return JWT
-            .create()
-            .withIssuer(config.jwt.issuer)
-            .withAudience(config.jwt.audience)
-            .withSubject(user.id.toString())
-            .withClaim(CLAIM_USER_ID, user.id.toString())
-            .withClaim(CLAIM_EMAIL, user.email)
-            .withExpiresAt(expiresAt)
-            .sign(Algorithm.HMAC256(config.jwt.secret))
-    }
+    private fun generateAccessToken(user: User): String =
+        jwt(config.jwt.secret) {
+            withIssuer(config.jwt.issuer)
+            withAudience(config.jwt.audience)
+            withSubject(user.id.toString())
+            withClaim(CLAIM_USER_ID, user.id.toString())
+            withClaim(CLAIM_EMAIL, user.email)
+            withExpiresIn(config.jwt.accessTokenExpireMinutes)
+        }
 
     private fun generateRefreshToken(user: User): String {
         val token = UUID.randomUUID().toString()
@@ -97,23 +98,16 @@ class AuthService(
     }
 
     private fun hashToken(token: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
+        val digest = MessageDigest.getInstance(DIGEST_ALGORITHM)
         val hashBytes = digest.digest(token.toByteArray())
+
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
-    private fun hashPassword(password: String): String =
-        BCrypt.withDefaults().hashToString(BCRYPT_COST, password.toCharArray())
+    private fun hashPassword(password: String): String = hasher.hashToString(BCRYPT_COST, password.toCharArray())
 
     private fun verifyPassword(
         password: String,
         hash: String,
-    ): Boolean = BCrypt.verifyer().verify(password.toCharArray(), hash).verified
-
-    companion object {
-        const val CLAIM_USER_ID = "userId"
-        const val CLAIM_EMAIL = "email"
-        private const val BCRYPT_COST = 12
-        private const val SECONDS_PER_MINUTE = 60L
-    }
+    ): Boolean = verifier.verify(password.toCharArray(), hash).verified
 }
