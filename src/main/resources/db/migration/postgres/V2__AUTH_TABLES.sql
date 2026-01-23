@@ -14,4 +14,4 @@ CREATE TABLE refresh_tokens (
 );
 
 CREATE INDEX refresh_tokens_user_idx ON refresh_tokens(user_id);
-CREATE INDEX refresh_tokens_hash_idx ON refresh_tokens USING hash(token_hash);
+CREATE INDEX refresh_tokens_hash_idx ON refresh_tokens(token_hash);
