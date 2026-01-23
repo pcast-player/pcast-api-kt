@@ -5,7 +5,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.pcast.config.Configuration
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 fun configureDatabase(config: Configuration) =
     connectAndMigrate(

@@ -21,7 +21,7 @@ fun Route.registerFeedRoutes() {
     get("/feeds") {
         val feeds = service.getFeeds()
 
-        if (!feeds.isEmpty()) {
+        if (feeds.isNotEmpty()) {
             call.respond(feeds.map(::FeedResponse))
         } else {
             throw AbortError(HttpError.NoContent, "No feeds found.")

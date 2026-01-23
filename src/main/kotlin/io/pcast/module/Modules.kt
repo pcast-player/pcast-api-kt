@@ -9,6 +9,7 @@ import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.sync.SyncService
 import io.pcast.plugins.configureDatabase
 import io.pcast.plugins.configureTestDatabase
+import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.dsl.module
 
 val configModule =
@@ -18,17 +19,17 @@ val configModule =
 
 val dbModule =
     module {
-        single(createdAtStart = true) { configureDatabase(get()) }
+        single<Database>(createdAtStart = true) { configureDatabase(get()) }
     }
 
 val testDbModule =
     module {
-        single(createdAtStart = true) { configureTestDatabase(get()) }
+        single<Database>(createdAtStart = true) { configureTestDatabase(get()) }
     }
 
 val appModule =
     module {
-        single<FeedRepository> { FeedRepository(get()) }
+        single { FeedRepository(get()) }
 
         single { FeedService(get()) }
         single { SyncService() }
