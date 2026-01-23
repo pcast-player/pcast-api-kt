@@ -21,4 +21,5 @@ sealed class HttpError(
 class AbortError(
     val code: HttpError,
     val details: String,
-) : Throwable()
+    cause: Throwable? = null,
+) : Throwable(details, cause)

@@ -4,6 +4,10 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
 import io.pcast.config.CONFIG_FILES
 import io.pcast.config.Configuration
+import io.pcast.module.auth.AuthService
+import io.pcast.module.auth.UserSeeder
+import io.pcast.module.auth.model.RefreshTokenRepository
+import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.feed.FeedService
 import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.sync.SyncService
@@ -30,9 +34,13 @@ val testDbModule =
 val appModule =
     module {
         single { FeedRepository(get()) }
+        single { UserRepository(get()) }
+        single { RefreshTokenRepository(get()) }
 
         single { FeedService(get()) }
         single { SyncService() }
+        single { AuthService(get(), get(), get()) }
+        single { UserSeeder(get(), get()) }
     }
 
 private fun buildConfigurationFromFiles() =

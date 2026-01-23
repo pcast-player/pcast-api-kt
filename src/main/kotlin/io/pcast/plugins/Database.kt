@@ -19,15 +19,23 @@ fun configureDatabase(config: Configuration) =
         migrationLocation = config.database.migrationsLocation,
     )
 
-fun configureTestDatabase(config: Configuration) =
-    connectAndMigrate(
+fun configureTestDatabase(config: Configuration): Database {
+    // Generate unique database name for test isolation
+    val uniqueDbUrl =
+        config.database.jdbcUrl.replace(
+            "mem:test",
+            "mem:test_${java.util.UUID.randomUUID().toString().replace("-", "")}",
+        )
+
+    return connectAndMigrate(
         dataSource =
             hikariDataSource {
-                jdbcUrl = config.database.jdbcUrl
+                jdbcUrl = uniqueDbUrl
                 driverClassName = config.database.driver
             },
         migrationLocation = config.database.migrationsLocation,
     )
+}
 
 private fun connectAndMigrate(
     dataSource: HikariDataSource,
