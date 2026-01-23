@@ -29,6 +29,7 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -147,11 +148,17 @@ internal class AuthRouterTest : KoinTest {
             val originalRefreshToken = loginResponse.refreshToken
 
             // Refresh to get new tokens
-            client
-                .post("/api/auth/refresh") {
-                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    setBody(RefreshRequest(originalRefreshToken))
-                }
+            val refreshResponse =
+                client
+                    .post("/api/auth/refresh") {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        setBody(RefreshRequest(originalRefreshToken))
+                    }.expect {
+                        assertEquals(HttpStatusCode.OK, status)
+                    }.body<TokenResponse>()
+
+            // Verify we got a new refresh token
+            assertNotEquals(originalRefreshToken, refreshResponse.refreshToken)
 
             // Original refresh token should no longer work (rotation)
             client
