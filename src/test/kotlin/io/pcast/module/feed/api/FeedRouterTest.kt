@@ -3,6 +3,7 @@ package io.pcast.module.feed.api
 import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -22,12 +23,16 @@ import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.module.appModule
+import io.pcast.module.auth.AuthService
+import io.pcast.module.auth.request.LoginRequest
+import io.pcast.module.auth.response.TokenResponse
 import io.pcast.module.configModule
 import io.pcast.module.feed.model.Feed
 import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
 import io.pcast.module.testDbModule
+import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
 import io.pcast.plugins.configureRouting
 import org.koin.ktor.plugin.Koin
@@ -58,52 +63,73 @@ private val FEEDS =
         }
     }
 
+private const val TEST_EMAIL = "feedtest@example.com"
+private const val TEST_PASSWORD = "testpassword123"
+
+private data class TestContext(
+    val client: HttpClient,
+    val accessToken: String,
+)
+
 internal class FeedRouterTest : KoinTest {
     private val feedRepository by inject<FeedRepository>()
+    private val authService by inject<AuthService>()
 
     @Test
     fun testGetFeeds() =
         testApplication {
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
 
-            client.get("/api/feeds").expect {
-                assertEquals(HttpStatusCode.OK, status)
-                assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
-            }
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(FEEDS.map(::FeedResponse), body<List<FeedResponse>>())
+                }
         }
 
     @Test
     fun testGetFeed() =
         testApplication {
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
             val feed = FEEDS.first()
             val response = FeedResponse(feed)
 
-            client.get("/api/feeds/${feed.nanoId}").expect {
-                assertEquals(HttpStatusCode.OK, status)
-                assertEquals(response, body<FeedResponse>())
-            }
+            ctx.client
+                .get("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(response, body<FeedResponse>())
+                }
         }
 
     @Test
     fun testGetFeedFailsWithUnknownId() =
         testApplication {
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
             val uuid = Generators.timeBasedGenerator().generate()
 
-            client.get("/api/feeds/$uuid").expect {
-                assertEquals(HttpStatusCode.NotFound, status)
-            }
+            ctx.client
+                .get("/api/feeds/$uuid") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
         }
 
     @Test
     fun testGetFeedFailsWithWrongIdType() =
         testApplication {
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
 
-            client.get("/api/feeds/fdsfsdf").expect {
-                assertEquals(HttpStatusCode.NotFound, status)
-            }
+            ctx.client
+                .get("/api/feeds/fdsfsdf") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
         }
 
     @Test
@@ -111,10 +137,11 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val title = "title"
             val url = "https://foo.bar"
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
 
-            client
+            ctx.client
                 .post("/api/feeds") {
+                    bearerAuth(ctx.accessToken)
                     header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     setBody(FeedRequest(title, url))
                 }.expect {
@@ -133,28 +160,32 @@ internal class FeedRouterTest : KoinTest {
         testApplication {
             val feed = FEEDS.first()
             val newTitle = "new title"
-            val client = configureServerAndGetClient()
+            val ctx = configureServerAndGetContext()
 
-            client
+            ctx.client
                 .put("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
                     header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     setBody(FeedRequest(newTitle, feed.url))
                 }.expect {
                     assertEquals(HttpStatusCode.NoContent, status)
                 }
 
-            client.get("/api/feeds/${feed.nanoId}").expect {
-                assertEquals(HttpStatusCode.OK, status)
+            ctx.client
+                .get("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
 
-                val response = body<FeedResponse>()
+                    val response = body<FeedResponse>()
 
-                assertEquals(newTitle, response.title)
-            }
+                    assertEquals(newTitle, response.title)
+                }
         }
 
     private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
 
-    private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
+    private suspend fun ApplicationTestBuilder.configureServerAndGetContext(): TestContext {
         application {
             install(Koin) {
                 modules(configModule, testDbModule, appModule)
@@ -165,21 +196,38 @@ internal class FeedRouterTest : KoinTest {
             }
 
             addTestData()
+            seedTestUser()
+            configureAuth()
             configureRouting()
             configureError()
         }
 
-        return createClient {
-            install(ClientContentNegotiation) {
-                json()
-                xml()
+        val client =
+            createClient {
+                install(ClientContentNegotiation) {
+                    json()
+                    xml()
+                }
             }
-        }
+
+        // Login via HTTP to get a valid token
+        val tokenResponse =
+            client
+                .post("/api/auth/login") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(LoginRequest(TEST_EMAIL, TEST_PASSWORD))
+                }.body<TokenResponse>()
+
+        return TestContext(client, tokenResponse.accessToken)
     }
 
     private fun addTestData() {
         for (feed in FEEDS) {
             feedRepository.save(feed)
         }
+    }
+
+    private fun seedTestUser() {
+        authService.createUser(TEST_EMAIL, TEST_PASSWORD)
     }
 }

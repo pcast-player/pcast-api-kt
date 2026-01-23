@@ -2,6 +2,15 @@ package io.pcast.config
 
 data class Configuration(
     val database: Database,
+    val jwt: JwtConfig,
+)
+
+data class JwtConfig(
+    val secret: String,
+    val issuer: String,
+    val audience: String,
+    val accessTokenExpireMinutes: Long = 60,
+    val refreshTokenExpireDays: Long = 30,
 )
 
 data class ConfigFile(

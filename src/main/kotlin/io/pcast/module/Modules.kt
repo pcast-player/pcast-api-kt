@@ -4,6 +4,10 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
 import io.pcast.config.CONFIG_FILES
 import io.pcast.config.Configuration
+import io.pcast.module.auth.AuthService
+import io.pcast.module.auth.UserSeeder
+import io.pcast.module.auth.model.RefreshTokenRepository
+import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.feed.FeedService
 import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.sync.SyncService
@@ -14,7 +18,11 @@ import org.koin.dsl.module
 
 val configModule =
     module {
-        single(createdAtStart = true) { buildConfigurationFromFiles() }
+        single(createdAtStart = true) {
+            buildConfigurationFromFiles().also { config ->
+                validateJwtSecret(config.jwt.secret)
+            }
+        }
     }
 
 val dbModule =
@@ -30,9 +38,13 @@ val testDbModule =
 val appModule =
     module {
         single { FeedRepository(get()) }
+        single { UserRepository(get()) }
+        single { RefreshTokenRepository(get()) }
 
         single { FeedService(get()) }
         single { SyncService() }
+        single { AuthService(get(), get(), get()) }
+        single { UserSeeder(get(), get()) }
     }
 
 private fun buildConfigurationFromFiles() =
@@ -52,3 +64,14 @@ private inline fun <reified T : Any> buildConfiguration(builder: ConfigLoaderBui
         .apply(builder)
         .build()
         .loadConfigOrThrow<T>()
+
+private fun validateJwtSecret(secret: String) {
+    require(secret.isNotBlank()) {
+        "JWT secret must not be blank. " +
+            "Please configure a valid secret in your configuration file."
+    }
+    require(secret.length >= 32) {
+        val length = secret.length
+        "JWT secret must be at least 32 characters long for security. Current length: $length"
+    }
+}
