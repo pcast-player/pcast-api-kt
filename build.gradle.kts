@@ -11,6 +11,7 @@ val h2Version: String by project
 val hopliteVersion: String by project
 val xmlUtilVersion: String by project
 val koinVersion: String by project
+val koinAnnotationsVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.3.10"
@@ -18,6 +19,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("com.google.devtools.ksp") version "2.3.5"
 }
 
 group = "io.pcast"
@@ -100,6 +102,8 @@ dependencies {
     implementation("io.insert-koin:koin-core:$koinVersion")
     implementation("io.insert-koin:koin-ktor:$koinVersion")
     implementation("io.insert-koin:koin-logger-slf4j:$koinVersion")
+    implementation("io.insert-koin:koin-annotations:$koinAnnotationsVersion")
+    ksp("io.insert-koin:koin-ksp-compiler:$koinAnnotationsVersion")
     testImplementation("io.insert-koin:koin-test:$koinVersion")
     testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
 
