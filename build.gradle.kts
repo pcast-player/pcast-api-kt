@@ -1,4 +1,4 @@
-import io.gitlab.arturbosch.detekt.Detekt
+// import io.gitlab.arturbosch.detekt.Detekt
 
 val kotlinVersion: String by project
 val logbackVersion: String by project
@@ -18,7 +18,7 @@ plugins {
     id("io.ktor.plugin") version "3.4.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
-    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    // id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("com.google.devtools.ksp") version "2.3.5"
 }
 
@@ -39,19 +39,19 @@ spotless {
     }
 }
 
-detekt {
-    buildUponDefaultConfig = true
-    config.setFrom("$projectDir/config/detekt/detekt.yml")
-}
-
-tasks.withType<Detekt>().configureEach {
-    reports {
-        xml.required.set(false)
-        html.required.set(false)
-        sarif.required.set(false)
-        md.required.set(true)
-    }
-}
+//detekt {
+//    buildUponDefaultConfig = true
+//    config.setFrom("$projectDir/config/detekt/detekt.yml")
+//}
+//
+//tasks.withType<Detekt>().configureEach {
+//    reports {
+//        xml.required.set(false)
+//        html.required.set(false)
+//        sarif.required.set(false)
+//        md.required.set(true)
+//    }
+//}
 
 repositories {
     mavenCentral()
