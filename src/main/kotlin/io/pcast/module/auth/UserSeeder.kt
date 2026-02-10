@@ -1,6 +1,7 @@
 package io.pcast.module.auth
 
 import io.pcast.module.auth.model.UserRepository
+import org.koin.core.annotation.Single
 
 /**
  * Utility for seeding users into the database.
@@ -12,6 +13,7 @@ import io.pcast.module.auth.model.UserRepository
  * seeder.seedDefaultUsers()
  * ```
  */
+@Single
 class UserSeeder(
     private val authService: AuthService,
     private val userRepository: UserRepository,

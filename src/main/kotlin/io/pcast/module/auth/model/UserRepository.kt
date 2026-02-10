@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.koin.core.annotation.Single
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -20,6 +21,7 @@ object UsersTable : UUIDTable("users") {
     val createdAt = datetime("created_at")
 }
 
+@Single
 class UserRepository(
     private val db: Database,
 ) {

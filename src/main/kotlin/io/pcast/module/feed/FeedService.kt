@@ -4,7 +4,9 @@ import io.pcast.module.feed.model.Feed
 import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
+import org.koin.core.annotation.Single
 
+@Single
 class FeedService(
     private val repository: FeedRepository,
 ) {
