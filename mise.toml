@@ -1,5 +1,5 @@
 [tools]
-java = "temurin-22"
+java = "temurin-25.0.2+10.0.LTS"
 
 [shell_alias]
 "pcast:build" = "./gradlew build"
