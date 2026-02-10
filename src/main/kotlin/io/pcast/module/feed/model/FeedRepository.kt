@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.koin.core.annotation.Single
 import java.util.UUID
 
 private const val VARCHAR_MAX_LENGTH = 255
@@ -23,6 +24,7 @@ object FeedsTable : UUIDTable("feeds") {
     val synchronizedAt = datetime("synchronized_at").nullable()
 }
 
+@Single
 class FeedRepository(
     private val db: Database,
 ) {

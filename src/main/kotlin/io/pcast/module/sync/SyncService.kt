@@ -4,7 +4,9 @@ import cash.z.ecc.android.bip39.Mnemonics
 import cash.z.ecc.android.bip39.toSeed
 import io.pcast.extensions.humanReadableWords
 import io.pcast.helpers.generateFriendlyId
+import org.koin.core.annotation.Single
 
+@Single
 class SyncService {
     fun createSyncPhrase() =
         Mnemonics

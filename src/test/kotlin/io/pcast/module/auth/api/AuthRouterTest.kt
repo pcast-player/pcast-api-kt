@@ -14,7 +14,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import io.pcast.module.appModule
+import io.pcast.module.AppModule
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
@@ -24,6 +24,7 @@ import io.pcast.module.testDbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
 import io.pcast.plugins.configureRouting
+import org.koin.ksp.generated.module
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
 import org.koin.test.inject
@@ -207,7 +208,7 @@ internal class AuthRouterTest : KoinTest {
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
             install(Koin) {
-                modules(configModule, testDbModule, appModule)
+                modules(configModule, testDbModule, AppModule().module)
             }
 
             install(ContentNegotiation) {

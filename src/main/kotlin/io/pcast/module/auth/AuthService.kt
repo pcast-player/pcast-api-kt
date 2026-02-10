@@ -8,6 +8,7 @@ import io.pcast.module.auth.model.RefreshTokenRepository
 import io.pcast.module.auth.model.User
 import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.auth.response.TokenResponse
+import org.koin.core.annotation.Single
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.UUID
@@ -18,6 +19,7 @@ private const val BCRYPT_COST = 12
 private const val SECONDS_PER_MINUTE = 60L
 private const val DIGEST_ALGORITHM = "SHA-256"
 
+@Single
 class AuthService(
     private val config: Configuration,
     private val userRepository: UserRepository,
