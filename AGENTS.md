@@ -122,10 +122,24 @@ throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
 
 ### Dependency Injection (Koin)
 
-- Define modules in `src/main/kotlin/io/pcast/module/Modules.kt`
-- Use `single { }` for singletons, `factory { }` for transient
+- Uses **Koin Annotations** (compiler plugin via KSP) for compile-time DI wiring
+- Annotate classes with `@Single` for singletons or `@Factory` for transient instances
+- The `AppModule` class in `src/main/kotlin/io/pcast/module/AppModule.kt` uses `@Module` + `@ComponentScan("io.pcast.module")` to auto-discover annotated classes
+- Manual DSL modules (`configModule`, `dbModule`, `testDbModule`) remain in `Modules.kt` for definitions that use factory functions
+- Use the generated module via `AppModule().module` (from `org.koin.ksp.generated.module`)
 - Inject in routes: `val service by inject<FeedService>()`
 - In tests: extend `KoinTest` and use `by inject<T>()`
+
+```kotlin
+// Annotate classes directly — no manual wiring needed
+@Single
+class FeedService(private val repository: FeedRepository)
+
+// Use in Application.kt or tests
+install(Koin) {
+    modules(configModule, dbModule, AppModule().module)
+}
+```
 
 ### Routing (Ktor)
 
@@ -153,7 +167,8 @@ src/main/kotlin/io/pcast/
 ├── extensions/              # Extension functions
 ├── helpers/                 # Utility functions (UUID, NanoId)
 ├── module/                  # Feature modules
-│   ├── Modules.kt          # Koin DI module definitions
+│   ├── AppModule.kt         # Koin @Module with @ComponentScan
+│   ├── Modules.kt           # Manual Koin DSL modules (config, db)
 │   └── <feature>/          # Feature-specific code
 │       ├── api/            # Route handlers (*Router.kt)
 │       ├── error/          # Feature-specific errors
