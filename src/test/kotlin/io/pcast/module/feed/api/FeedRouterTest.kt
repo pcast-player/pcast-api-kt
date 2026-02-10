@@ -22,7 +22,7 @@ import io.ktor.server.testing.testApplication
 import io.pcast.extensions.minusDays
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
-import io.pcast.module.appModule
+import io.pcast.module.AppModule
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.response.TokenResponse
@@ -35,6 +35,7 @@ import io.pcast.module.testDbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
 import io.pcast.plugins.configureRouting
+import org.koin.ksp.generated.module
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
 import org.koin.test.inject
@@ -188,7 +189,7 @@ internal class FeedRouterTest : KoinTest {
     private suspend fun ApplicationTestBuilder.configureServerAndGetContext(): TestContext {
         application {
             install(Koin) {
-                modules(configModule, testDbModule, appModule)
+                modules(configModule, testDbModule, AppModule().module)
             }
 
             install(ContentNegotiation) {
