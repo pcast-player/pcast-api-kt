@@ -19,7 +19,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
     // id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.3.5"
+    id("com.google.devtools.ksp") version "2.3.6"
 }
 
 group = "io.pcast"
