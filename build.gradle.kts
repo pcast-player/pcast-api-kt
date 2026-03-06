@@ -108,5 +108,5 @@ dependencies {
     testImplementation("io.insert-koin:koin-test:$koinVersion")
     testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
 
-    implementation("io.github.serpro69:kotlin-faker:1.16.0")
+    implementation("io.github.serpro69:kotlin-faker:1.16.1")
 }
