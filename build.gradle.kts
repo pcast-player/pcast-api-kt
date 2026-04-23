@@ -14,7 +14,7 @@ val koinVersion: String by project
 val koinAnnotationsVersion: String by project
 
 plugins {
-    kotlin("jvm") version "2.3.10"
+    kotlin("jvm") version "2.3.21"
     id("io.ktor.plugin") version "3.4.1"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
     id("com.diffplug.spotless") version "8.3.0"
