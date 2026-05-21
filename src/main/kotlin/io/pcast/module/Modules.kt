@@ -9,9 +9,17 @@ import io.pcast.plugins.configureTestDatabase
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.dsl.module
 
+/**
+ * Environment name controlling startup validation.
+ * Set PCAST_ENV=production in deployments to enforce strict config checks.
+ * Recognised values: "development" (default), "test", "production".
+ */
+val PCAST_ENV: String get() = System.getenv("PCAST_ENV") ?: "development"
+
 val configModule =
     module {
         single(createdAtStart = true) {
+            validateEnvironment()
             buildConfigurationFromFiles().also { config ->
                 validateJwtSecret(config.jwt.secret)
             }
@@ -45,6 +53,21 @@ private inline fun <reified T : Any> buildConfiguration(builder: ConfigLoaderBui
         .apply(builder)
         .build()
         .loadConfigOrThrow<T>()
+
+/**
+ * When PCAST_ENV=production, require app.prod.conf to be on the classpath.
+ * This prevents the application from booting in production using only
+ * placeholder defaults or, worse, the committed test secret.
+ */
+private fun validateEnvironment() {
+    if (PCAST_ENV != "production") return
+
+    val prodConf = object {}.javaClass.getResource("/app.prod.conf")
+    require(prodConf != null) {
+        "PCAST_ENV=production but /app.prod.conf was not found on the classpath. " +
+            "Deploy app.prod.conf alongside the JAR or mount it as a secret."
+    }
+}
 
 private fun validateJwtSecret(secret: String) {
     require(secret.isNotBlank()) {
