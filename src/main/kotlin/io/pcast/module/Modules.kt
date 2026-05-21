@@ -9,6 +9,8 @@ import io.pcast.plugins.configureTestDatabase
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.dsl.module
 
+private const val POSTGRES_DRIVER = "org.postgresql.Driver"
+
 /**
  * Environment name controlling startup validation.
  * Set PCAST_ENV=production in deployments to enforce strict config checks.
@@ -22,6 +24,7 @@ val configModule =
             validateEnvironment()
             buildConfigurationFromFiles().also { config ->
                 validateJwtSecret(config.jwt.secret)
+                validateDatabaseCredentials(config)
             }
         }
     }
@@ -66,6 +69,21 @@ private fun validateEnvironment() {
     require(prodConf != null) {
         "PCAST_ENV=production but /app.prod.conf was not found on the classpath. " +
             "Deploy app.prod.conf alongside the JAR or mount it as a secret."
+    }
+}
+
+/**
+ * When connecting to PostgreSQL, require non-blank username and password.
+ * H2 in-memory databases (used in tests) do not need credentials.
+ */
+private fun validateDatabaseCredentials(config: Configuration) {
+    if (config.database.driver != POSTGRES_DRIVER) return
+
+    require(config.database.user.isNotBlank()) {
+        "database.user must not be blank when using the PostgreSQL driver."
+    }
+    require(!config.database.password.isNullOrBlank()) {
+        "database.password must not be blank when using the PostgreSQL driver."
     }
 }
 
