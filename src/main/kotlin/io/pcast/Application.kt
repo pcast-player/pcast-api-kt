@@ -19,9 +19,6 @@ import io.pcast.plugins.configureRateLimit
 import io.pcast.plugins.configureRouting
 import io.pcast.plugins.configureSecurityHeaders
 import io.pcast.plugins.configureValidation
-import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
-import nl.adaptivity.xmlutil.XmlStreaming
-import nl.adaptivity.xmlutil.newGenericReader
 import org.koin.ksp.generated.module
 import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
@@ -35,49 +32,21 @@ fun main() {
 /**
  * Harden the StAX XMLInputFactory used by xmlutil against XXE and XML-bomb attacks.
  *
- * This must be called before any XML deserialization occurs. It disables:
- * - External general entities  (classic XXE / SSRF vector)
+ * Must be called before any XML deserialization occurs. Disables:
+ * - External general entities (XXE / SSRF vector)
  * - External parameter entities (DTD-based information disclosure)
- * - DOCTYPE declarations        (billion-laughs amplification)
  *
- * IMPORTANT: Review these settings after every xmlutil upgrade.
- * The pin is: xmlUtilVersion=0.91.3 — see @OptIn annotation below.
+ * Works by setting JVM system properties honoured by both the JDK built-in
+ * StAX RI and Woodstox (which is the factory used by xmlutil on JDK targets).
+ *
+ * IMPORTANT: Re-verify these settings on every xmlutil upgrade.
+ * Current pin: xmlUtilVersion=0.91.3 (gradle.properties).
  */
-@OptIn(ExperimentalXmlUtilApi::class)
 private fun hardenXmlParser() {
-    // Disable DTD support at the JVM StAX factory level. This affects all
-    // StAX readers created by the JVM default factory, including xmlutil's.
-    System.setProperty("javax.xml.stream.XMLInputFactory", "com.ctc.wstx.stax.WstxInputFactory")
-    // Feature flags supported by both the JDK built-in StAX and Woodstox
-    val disabledFeatures =
-        listOf(
-            "http://xml.org/sax/features/external-general-entities",
-            "http://xml.org/sax/features/external-parameter-entities",
-        )
-    val disabledProperties =
-        listOf(
-            "javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD",
-            "javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA",
-        )
-
-    // Use xmlutil's own streaming factory to test a reader; probe that it is
-    // correctly using the hardened factory by attempting to instantiate one.
-    runCatching {
-        XmlStreaming.newGenericReader("<a/>")
-    }
-
-    // Set JVM-level system properties that the StAX RI and Woodstox honour.
     System.setProperty("javax.xml.accessExternalDTD", "")
     System.setProperty("javax.xml.accessExternalSchema", "")
-
-    // Suppress unused variable warnings on the lists defined above.
-    @Suppress("UNUSED_EXPRESSION")
-    disabledFeatures
-    @Suppress("UNUSED_EXPRESSION")
-    disabledProperties
 }
 
-@OptIn(ExperimentalXmlUtilApi::class)
 fun Application.module() {
     hardenXmlParser()
 
@@ -92,8 +61,9 @@ fun Application.module() {
 
     install(ContentNegotiation) {
         json()
-        // NOTE: xmlutil 0.91.3 is pinned; review XXE hardening on upgrade.
-        // External entities and DOCTYPE are disabled via hardenXmlParser().
+        // xmlutil pin: 0.91.3 (gradle.properties). Review XXE hardening on upgrade.
+        // ExperimentalXmlUtilApi: used via ktor-serialization-kotlinx-xml only;
+        // no direct xmlutil API calls remain in application code.
         xml()
     }
 
