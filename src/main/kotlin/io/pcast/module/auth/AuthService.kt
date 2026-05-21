@@ -86,7 +86,7 @@ class AuthService(
     }
 
     private fun generateAccessToken(user: User): String =
-        jwt(config.jwt.secret) {
+        jwt(secret = config.jwt.secret) {
             withIssuer(config.jwt.issuer)
             withAudience(config.jwt.audience)
             withSubject(user.id.toString())
