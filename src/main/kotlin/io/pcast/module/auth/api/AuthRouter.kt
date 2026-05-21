@@ -14,6 +14,9 @@ import io.pcast.module.auth.request.RefreshRequest
 import io.pcast.plugins.RATE_LIMIT_LOGIN
 import io.pcast.plugins.RATE_LIMIT_REFRESH
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("AuthRouter")
 
 fun Route.registerAuthRoutes() {
     val authService by inject<AuthService>()
@@ -24,7 +27,10 @@ fun Route.registerAuthRoutes() {
 
             val tokenResponse =
                 authService.login(request.email, request.password)
-                    ?: throw AbortError(HttpError.Unauthorized, "Invalid email or password")
+                    ?: run {
+                        log.warn("Login failed for email={}", request.email)
+                        throw AbortError(HttpError.Unauthorized, "Invalid email or password")
+                    }
 
             call.respond(HttpStatusCode.OK, tokenResponse)
         }
@@ -36,7 +42,10 @@ fun Route.registerAuthRoutes() {
 
             val tokenResponse =
                 authService.refresh(request.refreshToken)
-                    ?: throw AbortError(HttpError.Unauthorized, "Invalid or expired refresh token")
+                    ?: run {
+                        log.warn("Refresh token not found or expired")
+                        throw AbortError(HttpError.Unauthorized, "Unauthorized")
+                    }
 
             call.respond(HttpStatusCode.OK, tokenResponse)
         }
