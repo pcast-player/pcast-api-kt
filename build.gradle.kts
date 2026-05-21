@@ -77,6 +77,8 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("io.ktor:ktor-server-rate-limit")
     implementation("io.ktor:ktor-server-request-validation")
+    implementation("io.ktor:ktor-server-cors")
+    implementation("io.ktor:ktor-server-default-headers")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
