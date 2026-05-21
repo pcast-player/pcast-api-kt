@@ -14,11 +14,11 @@ import org.koin.core.annotation.Single
 import java.time.LocalDateTime
 import java.util.UUID
 
-private const val VARCHAR_MAX_LENGTH = 255
+private const val TOKEN_HASH_LENGTH = 88
 
 object RefreshTokensTable : UUIDTable("refresh_tokens") {
     val userId = reference("user_id", UsersTable)
-    val tokenHash = varchar("token_hash", VARCHAR_MAX_LENGTH).uniqueIndex()
+    val tokenHash = varchar("token_hash", TOKEN_HASH_LENGTH).uniqueIndex()
     val expiresAt = datetime("expires_at")
     val createdAt = datetime("created_at")
 }
