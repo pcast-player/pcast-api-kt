@@ -79,7 +79,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.h2database:h2:$h2Version")
+    testImplementation("com.h2database:h2:$h2Version")
 
     // Flyway
     implementation("org.flywaydb:flyway-core:${flywayVersion}")
