@@ -47,10 +47,12 @@ data class OpmlOutline(
     val xmlUrl: String,
 ) {
     fun toFeed(
+        userId: UUID,
         id: UUID = generateUuidV7(),
         nanoId: String = generateNanoId(),
     ) = Feed(
         id = id,
+        userId = userId,
         nanoId = nanoId,
         title = text,
         url = xmlUrl,

@@ -64,6 +64,8 @@ class AuthService(
         password: String,
     ): User = userRepository.create(email, hashPassword(password))
 
+    fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
+
     private fun generateTokenPair(user: User): TokenResponse {
         val accessToken = generateAccessToken(user)
         val refreshToken = generateRefreshToken(user)

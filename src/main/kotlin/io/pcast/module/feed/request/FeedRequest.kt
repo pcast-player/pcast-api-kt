@@ -12,10 +12,12 @@ data class FeedRequest(
     val url: String,
 ) {
     fun toModel(
+        userId: UUID,
         id: UUID = generateUuidV7(),
         nanoId: String = generateNanoId(),
     ) = Feed(
         id = id,
+        userId = userId,
         nanoId = nanoId,
         title = title,
         url = url,
