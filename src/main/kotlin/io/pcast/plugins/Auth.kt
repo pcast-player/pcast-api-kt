@@ -37,9 +37,13 @@ fun Application.configureAuth() {
                 val userId = runCatching { UUID.fromString(userIdStr) }.getOrNull() ?: return@validate null
 
                 // Reject tokens whose subject no longer exists in the database.
-                // This closes the window where a deleted account keeps working
-                // until the token expires naturally.
-                userRepository.findById(userId) ?: return@validate null
+                val user = userRepository.findById(userId) ?: return@validate null
+
+                // Reject tokens issued before the last tokenVersion increment.
+                // This immediately invalidates all access tokens on logout or
+                // password change without waiting for natural expiry.
+                val claimVersion = credential.payload.getClaim("tokenVersion")?.asInt() ?: return@validate null
+                if (claimVersion != user.tokenVersion) return@validate null
 
                 JWTPrincipal(credential.payload)
             }

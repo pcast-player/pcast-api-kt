@@ -15,6 +15,7 @@ import java.util.UUID
 
 private const val CLAIM_USER_ID = "userId"
 private const val CLAIM_EMAIL = "email"
+private const val CLAIM_TOKEN_VERSION = "tokenVersion"
 private const val BCRYPT_COST = 12
 private const val SECONDS_PER_MINUTE = 60L
 private const val DIGEST_ALGORITHM = "SHA-256"
@@ -55,7 +56,10 @@ class AuthService(
 
     fun logout(refreshToken: String): Boolean {
         val tokenHash = hashToken(refreshToken)
+        val storedToken = refreshTokenRepository.findByTokenHash(tokenHash) ?: return false
 
+        // Invalidate all outstanding access tokens by bumping the token version.
+        userRepository.incrementTokenVersion(storedToken.userId)
         return refreshTokenRepository.deleteByTokenHash(tokenHash)
     }
 
@@ -84,6 +88,7 @@ class AuthService(
             withSubject(user.id.toString())
             withClaim(CLAIM_USER_ID, user.id.toString())
             withClaim(CLAIM_EMAIL, user.email)
+            withClaim(CLAIM_TOKEN_VERSION, user.tokenVersion)
             withExpiresIn(config.jwt.accessTokenExpireMinutes)
         }
 
