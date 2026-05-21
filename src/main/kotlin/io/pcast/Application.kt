@@ -17,6 +17,7 @@ import io.pcast.plugins.configureError
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRateLimit
 import io.pcast.plugins.configureRouting
+import io.pcast.plugins.configureSecurityHeaders
 import io.pcast.plugins.configureValidation
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.XmlStreaming
@@ -87,6 +88,7 @@ fun Application.module() {
 
     val config by inject<Configuration>()
     configureCors(config.cors)
+    configureSecurityHeaders()
 
     install(ContentNegotiation) {
         json()

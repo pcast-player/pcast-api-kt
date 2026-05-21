@@ -1,8 +1,10 @@
 package io.pcast.module.auth.api
 
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.request.receive
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -32,6 +34,7 @@ fun Route.registerAuthRoutes() {
                         throw AbortError(HttpError.Unauthorized, "Invalid email or password")
                     }
 
+            call.response.header(HttpHeaders.CacheControl, "no-store")
             call.respond(HttpStatusCode.OK, tokenResponse)
         }
     }
@@ -47,6 +50,7 @@ fun Route.registerAuthRoutes() {
                         throw AbortError(HttpError.Unauthorized, "Unauthorized")
                     }
 
+            call.response.header(HttpHeaders.CacheControl, "no-store")
             call.respond(HttpStatusCode.OK, tokenResponse)
         }
     }
@@ -56,6 +60,7 @@ fun Route.registerAuthRoutes() {
 
         authService.logout(request.refreshToken)
 
+        call.response.header(HttpHeaders.CacheControl, "no-store")
         call.respond(HttpStatusCode.NoContent)
     }
 }
