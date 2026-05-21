@@ -8,6 +8,7 @@ import io.pcast.module.auth.model.RefreshTokenRepository
 import io.pcast.module.auth.model.User
 import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.auth.response.TokenResponse
+import io.pcast.plugins.validateNewPassword
 import org.koin.core.annotation.Single
 import java.security.SecureRandom
 import java.time.LocalDateTime
@@ -70,7 +71,11 @@ class AuthService(
     fun createUser(
         email: String,
         password: String,
-    ): User = userRepository.create(email, hashPassword(password))
+    ): User {
+        val errors = validateNewPassword(password)
+        require(errors.isEmpty()) { errors.joinToString("; ") }
+        return userRepository.create(email, hashPassword(password))
+    }
 
     fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
 

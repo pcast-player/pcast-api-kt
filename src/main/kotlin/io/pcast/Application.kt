@@ -15,6 +15,7 @@ import io.pcast.plugins.configureError
 import io.pcast.plugins.configureMonitoring
 import io.pcast.plugins.configureRateLimit
 import io.pcast.plugins.configureRouting
+import io.pcast.plugins.configureValidation
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.XmlStreaming
 import nl.adaptivity.xmlutil.newGenericReader
@@ -89,6 +90,7 @@ fun Application.module() {
     }
 
     configureRateLimit()
+    configureValidation()
     configureAuth()
     configureRouting()
     configureMonitoring()
