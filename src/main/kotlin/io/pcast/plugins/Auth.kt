@@ -10,12 +10,15 @@ import io.ktor.server.auth.jwt.jwt
 import io.pcast.config.Configuration
 import io.pcast.error.AbortError
 import io.pcast.error.HttpError
+import io.pcast.module.auth.model.UserRepository
 import org.koin.ktor.ext.inject
+import java.util.UUID
 
 const val JWT_AUTH_NAME = "jwt-auth"
 
 fun Application.configureAuth() {
     val config by inject<Configuration>()
+    val userRepository by inject<UserRepository>()
 
     install(Authentication) {
         jwt(JWT_AUTH_NAME) {
@@ -30,16 +33,19 @@ fun Application.configureAuth() {
             )
 
             validate { credential ->
-                val userId = credential.payload.getClaim("userId")?.asString()
-                if (userId != null) {
-                    JWTPrincipal(credential.payload)
-                } else {
-                    null
-                }
+                val userIdStr = credential.payload.getClaim("userId")?.asString() ?: return@validate null
+                val userId = runCatching { UUID.fromString(userIdStr) }.getOrNull() ?: return@validate null
+
+                // Reject tokens whose subject no longer exists in the database.
+                // This closes the window where a deleted account keeps working
+                // until the token expires naturally.
+                userRepository.findById(userId) ?: return@validate null
+
+                JWTPrincipal(credential.payload)
             }
 
             challenge { _, _ ->
-                throw AbortError(HttpError.Unauthorized, "Invalid or expired token")
+                throw AbortError(HttpError.Unauthorized, "Unauthorized")
             }
         }
     }
