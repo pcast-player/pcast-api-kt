@@ -32,6 +32,14 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
+// Ensure the fat JAR never bundles test configuration files.
+// app.local.conf may contain real secrets in development; it must not ship.
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    exclude("app.local.conf")
+    exclude("app.test.conf")
+    exclude("logback-test.xml")
+}
+
 spotless {
     kotlin {
         ktlint().setEditorConfigPath("$projectDir/.editorconfig")
