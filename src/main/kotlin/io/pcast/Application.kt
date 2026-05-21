@@ -13,6 +13,7 @@ import io.pcast.module.dbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
 import io.pcast.plugins.configureMonitoring
+import io.pcast.plugins.configureRateLimit
 import io.pcast.plugins.configureRouting
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import org.koin.ksp.generated.module
@@ -36,6 +37,7 @@ fun Application.module() {
         xml()
     }
 
+    configureRateLimit()
     configureAuth()
     configureRouting()
     configureMonitoring()

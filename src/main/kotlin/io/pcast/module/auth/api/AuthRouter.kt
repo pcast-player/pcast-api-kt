@@ -1,6 +1,7 @@
 package io.pcast.module.auth.api
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -10,29 +11,35 @@ import io.pcast.error.HttpError
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
+import io.pcast.plugins.RATE_LIMIT_LOGIN
+import io.pcast.plugins.RATE_LIMIT_REFRESH
 import org.koin.ktor.ext.inject
 
 fun Route.registerAuthRoutes() {
     val authService by inject<AuthService>()
 
-    post("/auth/login") {
-        val request = call.receive<LoginRequest>()
+    rateLimit(RATE_LIMIT_LOGIN) {
+        post("/auth/login") {
+            val request = call.receive<LoginRequest>()
 
-        val tokenResponse =
-            authService.login(request.email, request.password)
-                ?: throw AbortError(HttpError.Unauthorized, "Invalid email or password")
+            val tokenResponse =
+                authService.login(request.email, request.password)
+                    ?: throw AbortError(HttpError.Unauthorized, "Invalid email or password")
 
-        call.respond(HttpStatusCode.OK, tokenResponse)
+            call.respond(HttpStatusCode.OK, tokenResponse)
+        }
     }
 
-    post("/auth/refresh") {
-        val request = call.receive<RefreshRequest>()
+    rateLimit(RATE_LIMIT_REFRESH) {
+        post("/auth/refresh") {
+            val request = call.receive<RefreshRequest>()
 
-        val tokenResponse =
-            authService.refresh(request.refreshToken)
-                ?: throw AbortError(HttpError.Unauthorized, "Invalid or expired refresh token")
+            val tokenResponse =
+                authService.refresh(request.refreshToken)
+                    ?: throw AbortError(HttpError.Unauthorized, "Invalid or expired refresh token")
 
-        call.respond(HttpStatusCode.OK, tokenResponse)
+            call.respond(HttpStatusCode.OK, tokenResponse)
+        }
     }
 
     post("/auth/logout") {

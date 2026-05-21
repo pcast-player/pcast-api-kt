@@ -34,6 +34,7 @@ import io.pcast.module.feed.response.FeedResponse
 import io.pcast.module.testDbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
+import io.pcast.plugins.configureRateLimit
 import io.pcast.plugins.configureRouting
 import org.koin.ksp.generated.module
 import org.koin.ktor.plugin.Koin
@@ -237,6 +238,7 @@ internal class FeedRouterTest : KoinTest {
             }
 
             seedTestUsers()
+            configureRateLimit()
             configureAuth()
             configureRouting()
             configureError()
