@@ -17,16 +17,11 @@ fun configureDatabase(config: Configuration) =
                 password = config.database.password
                 maximumPoolSize = config.database.maximumPoolSize
             },
-        migrationLocation = config.database.migrationsLocation,
     )
 
-private fun connectAndMigrate(
-    dataSource: HikariDataSource,
-    migrationLocation: String,
-): Database {
+private fun connectAndMigrate(dataSource: HikariDataSource): Database {
     flyway {
         dataSource(dataSource)
-        locations(migrationLocation)
     }
 
     val db = Database.connect(dataSource)

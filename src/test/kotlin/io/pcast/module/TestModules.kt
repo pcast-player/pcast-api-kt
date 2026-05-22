@@ -52,7 +52,6 @@ private fun buildTestConfiguration(databaseName: String) =
                 Database(
                     jdbcUrl = jdbcUrl,
                     driver = POSTGRES_DRIVER,
-                    migrationsLocation = "db/migration/postgres",
                     user = postgres.username,
                     password = postgres.password,
                     maximumPoolSize = TEST_MAXIMUM_POOL_SIZE,
