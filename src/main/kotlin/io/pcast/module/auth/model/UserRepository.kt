@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.annotation.Single
 import java.time.LocalDateTime
 import java.util.UUID
@@ -19,6 +20,7 @@ object UsersTable : UUIDTable("users") {
     val email = varchar("email", VARCHAR_MAX_LENGTH).uniqueIndex()
     val passwordHash = varchar("password_hash", VARCHAR_MAX_LENGTH)
     val createdAt = datetime("created_at")
+    val tokenVersion = integer("token_version").default(0)
 }
 
 @Single
@@ -53,6 +55,7 @@ class UserRepository(
                 email = email,
                 passwordHash = passwordHash,
                 createdAt = LocalDateTime.now(),
+                tokenVersion = 0,
             )
 
         transaction(db) {
@@ -61,10 +64,29 @@ class UserRepository(
                 it[UsersTable.email] = user.email
                 it[UsersTable.passwordHash] = user.passwordHash
                 it[createdAt] = user.createdAt
+                it[tokenVersion] = user.tokenVersion
             }
         }
 
         return user
+    }
+
+    /**
+     * Increments token_version for the given user, immediately invalidating
+     * all outstanding access tokens issued with the previous version.
+     */
+    fun incrementTokenVersion(userId: UUID) {
+        transaction(db) {
+            val current =
+                UsersTable
+                    .selectAll()
+                    .where { UsersTable.id eq userId }
+                    .singleOrNull()
+                    ?.get(UsersTable.tokenVersion) ?: 0
+            UsersTable.update({ UsersTable.id eq userId }) {
+                it[tokenVersion] = current + 1
+            }
+        }
     }
 
     private fun mapRow(row: ResultRow) =
@@ -73,5 +95,6 @@ class UserRepository(
             email = row[UsersTable.email],
             passwordHash = row[UsersTable.passwordHash],
             createdAt = row[UsersTable.createdAt],
+            tokenVersion = row[UsersTable.tokenVersion],
         )
 }

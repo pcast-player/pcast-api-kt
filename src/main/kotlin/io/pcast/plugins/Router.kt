@@ -6,10 +6,13 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.pcast.module.auth.api.registerAuthRoutes
 import io.pcast.module.feed.api.registerFeedRoutes
+import io.pcast.module.health.api.registerHealthRoutes
 import io.pcast.module.sync.api.registerSyncRoutes
 
 fun Application.configureRouting() {
     routing {
+        registerHealthRoutes()
+
         route("/api") {
             registerAuthRoutes()
 

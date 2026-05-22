@@ -3,6 +3,11 @@ package io.pcast.config
 data class Configuration(
     val database: Database,
     val jwt: JwtConfig,
+    val cors: CorsConfig = CorsConfig(),
+)
+
+data class CorsConfig(
+    val allowedOrigins: List<String> = emptyList(),
 )
 
 data class JwtConfig(

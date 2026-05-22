@@ -38,3 +38,5 @@ out/
 *.opml
 
 src/main/resources/app.*.conf
+
+.env

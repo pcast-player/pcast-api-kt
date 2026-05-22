@@ -8,16 +8,21 @@ import io.pcast.module.auth.model.RefreshTokenRepository
 import io.pcast.module.auth.model.User
 import io.pcast.module.auth.model.UserRepository
 import io.pcast.module.auth.response.TokenResponse
+import io.pcast.plugins.validateNewPassword
 import org.koin.core.annotation.Single
-import java.security.MessageDigest
+import java.security.SecureRandom
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.Base64
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 private const val CLAIM_USER_ID = "userId"
 private const val CLAIM_EMAIL = "email"
+private const val CLAIM_TOKEN_VERSION = "tokenVersion"
 private const val BCRYPT_COST = 12
 private const val SECONDS_PER_MINUTE = 60L
-private const val DIGEST_ALGORITHM = "SHA-256"
+private const val REFRESH_TOKEN_BYTES = 32
+private const val HMAC_ALGORITHM = "HmacSHA256"
 
 @Single
 class AuthService(
@@ -27,6 +32,7 @@ class AuthService(
 ) {
     private val hasher = BCrypt.withDefaults()
     private val verifier = BCrypt.verifyer()
+    private val secureRandom = SecureRandom()
 
     fun login(
         email: String,
@@ -41,7 +47,7 @@ class AuthService(
     }
 
     fun refresh(refreshToken: String): TokenResponse? {
-        val tokenHash = hashToken(refreshToken)
+        val tokenHash = hmacToken(refreshToken)
         val storedToken =
             refreshTokenRepository
                 .findByTokenHash(tokenHash)
@@ -54,15 +60,24 @@ class AuthService(
     }
 
     fun logout(refreshToken: String): Boolean {
-        val tokenHash = hashToken(refreshToken)
+        val tokenHash = hmacToken(refreshToken)
+        val storedToken = refreshTokenRepository.findByTokenHash(tokenHash) ?: return false
 
+        // Invalidate all outstanding access tokens by bumping the token version.
+        userRepository.incrementTokenVersion(storedToken.userId)
         return refreshTokenRepository.deleteByTokenHash(tokenHash)
     }
 
     fun createUser(
         email: String,
         password: String,
-    ): User = userRepository.create(email, hashPassword(password))
+    ): User {
+        val errors = validateNewPassword(password)
+        require(errors.isEmpty()) { errors.joinToString("; ") }
+        return userRepository.create(email, hashPassword(password))
+    }
+
+    fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
 
     private fun generateTokenPair(user: User): TokenResponse {
         val accessToken = generateAccessToken(user)
@@ -76,18 +91,22 @@ class AuthService(
     }
 
     private fun generateAccessToken(user: User): String =
-        jwt(config.jwt.secret) {
+        jwt(secret = config.jwt.secret) {
             withIssuer(config.jwt.issuer)
             withAudience(config.jwt.audience)
             withSubject(user.id.toString())
             withClaim(CLAIM_USER_ID, user.id.toString())
             withClaim(CLAIM_EMAIL, user.email)
+            withClaim(CLAIM_TOKEN_VERSION, user.tokenVersion)
             withExpiresIn(config.jwt.accessTokenExpireMinutes)
         }
 
     private fun generateRefreshToken(user: User): String {
-        val token = UUID.randomUUID().toString()
-        val tokenHash = hashToken(token)
+        // 256 bits of SecureRandom, base64url-encoded (no padding)
+        val rawBytes = ByteArray(REFRESH_TOKEN_BYTES).also { secureRandom.nextBytes(it) }
+        val token = Base64.getUrlEncoder().withoutPadding().encodeToString(rawBytes)
+
+        val tokenHash = hmacToken(token)
         val expiresAt = LocalDateTime.now().plusDays(config.jwt.refreshTokenExpireDays)
 
         refreshTokenRepository.create(
@@ -99,11 +118,15 @@ class AuthService(
         return token
     }
 
-    private fun hashToken(token: String): String {
-        val digest = MessageDigest.getInstance(DIGEST_ALGORITHM)
-        val hashBytes = digest.digest(token.toByteArray())
-
-        return hashBytes.joinToString("") { "%02x".format(it) }
+    /**
+     * Returns a base64url-encoded HMAC-SHA256 of [token] keyed with the JWT secret.
+     * Stored in the database; the raw token is never persisted.
+     */
+    private fun hmacToken(token: String): String {
+        val mac = Mac.getInstance(HMAC_ALGORITHM)
+        mac.init(SecretKeySpec(config.jwt.secret.toByteArray(), HMAC_ALGORITHM))
+        val hmacBytes = mac.doFinal(token.toByteArray())
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes)
     }
 
     private fun hashPassword(password: String): String = hasher.hashToString(BCRYPT_COST, password.toCharArray())

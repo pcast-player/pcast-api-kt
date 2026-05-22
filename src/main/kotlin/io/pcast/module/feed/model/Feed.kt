@@ -5,6 +5,7 @@ import java.util.UUID
 
 data class Feed(
     val id: UUID,
+    val userId: UUID,
     val nanoId: String,
     val title: String,
     val url: String,

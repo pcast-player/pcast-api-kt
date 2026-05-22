@@ -1,5 +1,7 @@
 package io.pcast.module.feed.opml
 
+import io.pcast.error.AbortError
+import io.pcast.error.HttpError
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.module.feed.model.Feed
@@ -47,13 +49,23 @@ data class OpmlOutline(
     val xmlUrl: String,
 ) {
     fun toFeed(
+        userId: UUID,
         id: UUID = generateUuidV7(),
         nanoId: String = generateNanoId(),
-    ) = Feed(
-        id = id,
-        nanoId = nanoId,
-        title = text,
-        url = xmlUrl,
-        synchronizedAt = null,
-    )
+    ): Feed {
+        // Reject non-http(s) URL schemes to prevent javascript:/data: injection
+        val scheme = xmlUrl.substringBefore("://").lowercase()
+        if (scheme != "http" && scheme != "https") {
+            throw AbortError(HttpError.BadRequest, "OPML feed URL must use http or https scheme")
+        }
+
+        return Feed(
+            id = id,
+            userId = userId,
+            nanoId = nanoId,
+            title = text,
+            url = xmlUrl,
+            synchronizedAt = null,
+        )
+    }
 }

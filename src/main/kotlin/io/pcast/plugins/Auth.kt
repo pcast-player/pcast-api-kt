@@ -10,12 +10,15 @@ import io.ktor.server.auth.jwt.jwt
 import io.pcast.config.Configuration
 import io.pcast.error.AbortError
 import io.pcast.error.HttpError
+import io.pcast.module.auth.model.UserRepository
 import org.koin.ktor.ext.inject
+import java.util.UUID
 
 const val JWT_AUTH_NAME = "jwt-auth"
 
 fun Application.configureAuth() {
     val config by inject<Configuration>()
+    val userRepository by inject<UserRepository>()
 
     install(Authentication) {
         jwt(JWT_AUTH_NAME) {
@@ -30,16 +33,23 @@ fun Application.configureAuth() {
             )
 
             validate { credential ->
-                val userId = credential.payload.getClaim("userId")?.asString()
-                if (userId != null) {
-                    JWTPrincipal(credential.payload)
-                } else {
-                    null
-                }
+                val userIdStr = credential.payload.getClaim("userId")?.asString() ?: return@validate null
+                val userId = runCatching { UUID.fromString(userIdStr) }.getOrNull() ?: return@validate null
+
+                // Reject tokens whose subject no longer exists in the database.
+                val user = userRepository.findById(userId) ?: return@validate null
+
+                // Reject tokens issued before the last tokenVersion increment.
+                // This immediately invalidates all access tokens on logout or
+                // password change without waiting for natural expiry.
+                val claimVersion = credential.payload.getClaim("tokenVersion")?.asInt() ?: return@validate null
+                if (claimVersion != user.tokenVersion) return@validate null
+
+                JWTPrincipal(credential.payload)
             }
 
             challenge { _, _ ->
-                throw AbortError(HttpError.Unauthorized, "Invalid or expired token")
+                throw AbortError(HttpError.Unauthorized, "Unauthorized")
             }
         }
     }

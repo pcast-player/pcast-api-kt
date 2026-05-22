@@ -32,6 +32,14 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
+// Ensure the fat JAR never bundles test configuration files.
+// app.local.conf may contain real secrets in development; it must not ship.
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    exclude("app.local.conf")
+    exclude("app.test.conf")
+    exclude("logback-test.xml")
+}
+
 spotless {
     kotlin {
         ktlint().setEditorConfigPath("$projectDir/.editorconfig")
@@ -67,6 +75,10 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
+    implementation("io.ktor:ktor-server-rate-limit")
+    implementation("io.ktor:ktor-server-request-validation")
+    implementation("io.ktor:ktor-server-cors")
+    implementation("io.ktor:ktor-server-default-headers")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
@@ -79,7 +91,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.h2database:h2:$h2Version")
+    testImplementation("com.h2database:h2:$h2Version")
 
     // Flyway
     implementation("org.flywaydb:flyway-core:${flywayVersion}")
@@ -108,5 +120,5 @@ dependencies {
     testImplementation("io.insert-koin:koin-test:$koinVersion")
     testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
 
-    implementation("io.github.serpro69:kotlin-faker:1.16.1")
+
 }

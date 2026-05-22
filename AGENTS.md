@@ -206,3 +206,18 @@ The GitHub Actions workflow runs on push/PR to main:
 3. `./gradlew build` - Build and test
 
 Ensure all three pass before pushing.
+
+## Environment Variables
+
+| Variable | Values | Description |
+|----------|--------|-------------|
+| `PCAST_ENV` | `development` (default), `test`, `production` | Controls startup validation. When set to `production`, the application requires `/app.prod.conf` to be present on the classpath and will refuse to boot without it. |
+
+### Production deployment checklist
+
+1. Mount `app.prod.conf` as a secret (e.g. Kubernetes secret, Docker secret).
+2. Set `PCAST_ENV=production`.
+3. Ensure `jwt.secret` is at least 32 characters (validated at startup).
+4. Ensure `database.user` and `database.password` are set (validated at startup).
+5. Place the application behind a TLS-terminating reverse proxy (nginx, Caddy, etc.).
+6. Configure `cors.allowedOrigins` with the exact origins of your web clients.
