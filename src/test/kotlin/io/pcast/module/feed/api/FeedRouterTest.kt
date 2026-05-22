@@ -228,6 +228,20 @@ internal class FeedRouterTest : KoinTest {
         }
 
     @Test
+    fun testDifferentUsersCanHaveSameNanoId() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val secondUser = authService.getUserByEmail(TEST_EMAIL_2)!!
+            val sharedNanoId = "shared-nano-id-001"
+
+            feedRepository.create(feed(101, ctx.userId).copy(nanoId = sharedNanoId, title = "User 1 shared feed"))
+            feedRepository.create(feed(102, secondUser.id).copy(nanoId = sharedNanoId, title = "User 2 shared feed"))
+
+            assertEquals("User 1 shared feed", feedRepository.findByNanoId(sharedNanoId, ctx.userId).title)
+            assertEquals("User 2 shared feed", feedRepository.findByNanoId(sharedNanoId, secondUser.id).title)
+        }
+
+    @Test
     fun testOpmlImportRejectsDoctype() =
         testApplication {
             val ctx = configureServerAndGetContext()
