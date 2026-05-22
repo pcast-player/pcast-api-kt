@@ -15,35 +15,13 @@ fun configureDatabase(config: Configuration) =
                 driverClassName = config.database.driver
                 username = config.database.user
                 password = config.database.password
+                maximumPoolSize = config.database.maximumPoolSize
             },
-        migrationLocation = config.database.migrationsLocation,
     )
 
-fun configureTestDatabase(config: Configuration): Database {
-    // Generate unique database name for test isolation
-    val uniqueDbUrl =
-        config.database.jdbcUrl.replace(
-            "mem:test",
-            "mem:test_${java.util.UUID.randomUUID().toString().replace("-", "")}",
-        )
-
-    return connectAndMigrate(
-        dataSource =
-            hikariDataSource {
-                jdbcUrl = uniqueDbUrl
-                driverClassName = config.database.driver
-            },
-        migrationLocation = config.database.migrationsLocation,
-    )
-}
-
-private fun connectAndMigrate(
-    dataSource: HikariDataSource,
-    migrationLocation: String,
-): Database {
+private fun connectAndMigrate(dataSource: HikariDataSource): Database {
     flyway {
         dataSource(dataSource)
-        locations(migrationLocation)
     }
 
     val db = Database.connect(dataSource)

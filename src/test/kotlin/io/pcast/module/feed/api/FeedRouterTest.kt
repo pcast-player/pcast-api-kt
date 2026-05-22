@@ -27,11 +27,11 @@ import io.pcast.module.AppModule
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.response.TokenResponse
-import io.pcast.module.configModule
 import io.pcast.module.feed.model.Feed
 import io.pcast.module.feed.model.FeedRepository
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
+import io.pcast.module.testConfigModule
 import io.pcast.module.testDbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
@@ -275,7 +275,7 @@ internal class FeedRouterTest : KoinTest {
             hardenXmlParser()
 
             install(Koin) {
-                modules(configModule, testDbModule, AppModule().module)
+                modules(testConfigModule, testDbModule, AppModule().module)
             }
 
             install(ContentNegotiation) {

@@ -5,7 +5,6 @@ import com.sksamuel.hoplite.addResourceSource
 import io.pcast.config.CONFIG_FILES
 import io.pcast.config.Configuration
 import io.pcast.plugins.configureDatabase
-import io.pcast.plugins.configureTestDatabase
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.dsl.module
 
@@ -32,11 +31,6 @@ val configModule =
 val dbModule =
     module {
         single<Database>(createdAtStart = true) { configureDatabase(get()) }
-    }
-
-val testDbModule =
-    module {
-        single<Database>(createdAtStart = true) { configureTestDatabase(get()) }
     }
 
 private fun buildConfigurationFromFiles() =
@@ -74,7 +68,6 @@ private fun validateEnvironment() {
 
 /**
  * When connecting to PostgreSQL, require non-blank username and password.
- * H2 in-memory databases (used in tests) do not need credentials.
  */
 private fun validateDatabaseCredentials(config: Configuration) {
     if (config.database.driver != POSTGRES_DRIVER) return
