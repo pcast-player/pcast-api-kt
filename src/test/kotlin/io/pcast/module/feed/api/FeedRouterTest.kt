@@ -20,6 +20,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.pcast.extensions.minusDays
+import io.pcast.hardenXmlParser
 import io.pcast.helpers.generateNanoId
 import io.pcast.helpers.generateUuidV7
 import io.pcast.module.AppModule
@@ -226,16 +227,46 @@ internal class FeedRouterTest : KoinTest {
                 }
         }
 
+    @Test
+    fun testOpmlImportRejectsDoctype() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .post("/api/feeds/opml") {
+                    bearerAuth(ctx.accessToken)
+                    header(HttpHeaders.ContentType, ContentType.Application.Xml.toString())
+                    setBody(
+                        """
+                        <!DOCTYPE opml [<!ENTITY xxe "expanded">]>
+                        <opml version="2.0">
+                          <head><title>&xxe;</title></head>
+                          <body>
+                            <outline text="feeds">
+                              <outline text="&xxe;" type="rss" xmlUrl="https://rss.pcast.io/news.rss" />
+                            </outline>
+                          </body>
+                        </opml>
+                        """.trimIndent(),
+                    )
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
     private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
 
     private suspend fun ApplicationTestBuilder.configureServerAndGetContext(): TestContext {
         application {
+            hardenXmlParser()
+
             install(Koin) {
                 modules(configModule, testDbModule, AppModule().module)
             }
 
             install(ContentNegotiation) {
                 json()
+                xml()
             }
 
             seedTestUsers()

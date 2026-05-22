@@ -42,9 +42,11 @@ fun main() {
  * IMPORTANT: Re-verify these settings on every xmlutil upgrade.
  * Current pin: xmlUtilVersion=0.91.3 (gradle.properties).
  */
-private fun hardenXmlParser() {
+internal fun hardenXmlParser() {
     System.setProperty("javax.xml.accessExternalDTD", "")
     System.setProperty("javax.xml.accessExternalSchema", "")
+    System.setProperty("javax.xml.stream.supportDTD", "false")
+    System.setProperty("jdk.xml.dtd.support", "deny")
 }
 
 fun Application.module() {
