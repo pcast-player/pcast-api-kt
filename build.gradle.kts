@@ -14,12 +14,12 @@ val koinVersion: String by project
 val koinAnnotationsVersion: String by project
 
 plugins {
-    kotlin("jvm") version "2.3.10"
-    id("io.ktor.plugin") version "3.4.1"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
-    id("com.diffplug.spotless") version "8.3.0"
+    kotlin("jvm") version "2.3.21"
+    id("io.ktor.plugin") version "3.5.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.21"
+    id("com.diffplug.spotless") version "8.5.1"
     // id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.3.6"
+    id("com.google.devtools.ksp") version "2.3.8"
 }
 
 group = "io.pcast"
@@ -79,7 +79,7 @@ dependencies {
     implementation("io.ktor:ktor-server-request-validation")
     implementation("io.ktor:ktor-server-cors")
     implementation("io.ktor:ktor-server-default-headers")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.8.0-0.6.x-compat")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
     implementation("at.favre.lib:bcrypt:0.10.2")
@@ -100,7 +100,6 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-logging")
 
     implementation("com.sksamuel.hoplite:hoplite-core:$hopliteVersion")
     implementation("com.sksamuel.hoplite:hoplite-hocon:$hopliteVersion")
