@@ -4,7 +4,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.plugins.ratelimit.RateLimitName
-import io.ktor.server.request.receiveText
 import kotlin.time.Duration.Companion.minutes
 
 /**
