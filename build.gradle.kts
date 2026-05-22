@@ -7,7 +7,7 @@ val exposedVersion: String by project
 val flywayVersion: String by project
 val hikariVersion: String by project
 val postgresVersion: String by project
-val h2Version: String by project
+val testcontainersVersion: String by project
 val hopliteVersion: String by project
 val xmlUtilVersion: String by project
 val koinVersion: String by project
@@ -91,7 +91,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    testImplementation("com.h2database:h2:$h2Version")
+    testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersVersion")
 
     // Flyway
     implementation("org.flywaydb:flyway-core:${flywayVersion}")

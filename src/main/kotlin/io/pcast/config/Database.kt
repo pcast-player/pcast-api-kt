@@ -6,4 +6,5 @@ data class Database(
     val migrationsLocation: String,
     val user: String,
     val password: String? = null,
+    val maximumPoolSize: Int = 10,
 )

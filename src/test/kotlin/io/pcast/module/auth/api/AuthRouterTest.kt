@@ -19,7 +19,7 @@ import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
 import io.pcast.module.auth.response.TokenResponse
-import io.pcast.module.configModule
+import io.pcast.module.testConfigModule
 import io.pcast.module.testDbModule
 import io.pcast.plugins.configureAuth
 import io.pcast.plugins.configureError
@@ -210,7 +210,7 @@ internal class AuthRouterTest : KoinTest {
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {
             install(Koin) {
-                modules(configModule, testDbModule, AppModule().module)
+                modules(testConfigModule, testDbModule, AppModule().module)
             }
 
             install(ContentNegotiation) {
