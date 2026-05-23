@@ -21,7 +21,7 @@ private const val USER_HANDLE_BYTES = 64
 
 object UsersTable : UUIDTable("users") {
     val email = varchar("email", VARCHAR_MAX_LENGTH).uniqueIndex()
-    val passwordHash = varchar("password_hash", VARCHAR_MAX_LENGTH)
+    val passwordHash = varchar("password_hash", VARCHAR_MAX_LENGTH).nullable()
     val createdAt = datetime("created_at")
     val tokenVersion = integer("token_version").default(0)
     val passkeyUserHandle = varchar("passkey_user_handle", VARCHAR_MAX_LENGTH).uniqueIndex()
@@ -37,7 +37,7 @@ class UserRepository(
         transaction(db) {
             UsersTable
                 .selectAll()
-                .where { UsersTable.email eq email }
+                .where { UsersTable.email eq email.normalizedEmail() }
                 .map(::mapRow)
                 .singleOrNull()
         }
@@ -63,15 +63,16 @@ class UserRepository(
     fun create(
         email: String,
         passwordHash: String,
+        passkeyUserHandle: String = generateUserHandle(),
     ): User {
         val user =
             User(
                 id = generateUuidV7(),
-                email = email,
+                email = email.normalizedEmail(),
                 passwordHash = passwordHash,
                 createdAt = LocalDateTime.now(),
                 tokenVersion = 0,
-                passkeyUserHandle = generateUserHandle(),
+                passkeyUserHandle = passkeyUserHandle,
             )
 
         transaction(db) {
@@ -81,7 +82,35 @@ class UserRepository(
                 it[UsersTable.passwordHash] = user.passwordHash
                 it[createdAt] = user.createdAt
                 it[tokenVersion] = user.tokenVersion
-                it[passkeyUserHandle] = user.passkeyUserHandle
+                it[UsersTable.passkeyUserHandle] = user.passkeyUserHandle
+            }
+        }
+
+        return user
+    }
+
+    fun createPasskeyOnly(
+        email: String,
+        passkeyUserHandle: String,
+    ): User {
+        val user =
+            User(
+                id = generateUuidV7(),
+                email = email.normalizedEmail(),
+                passwordHash = null,
+                createdAt = LocalDateTime.now(),
+                tokenVersion = 0,
+                passkeyUserHandle = passkeyUserHandle,
+            )
+
+        transaction(db) {
+            UsersTable.insert {
+                it[id] = user.id
+                it[UsersTable.email] = user.email
+                it[UsersTable.passwordHash] = user.passwordHash
+                it[createdAt] = user.createdAt
+                it[tokenVersion] = user.tokenVersion
+                it[UsersTable.passkeyUserHandle] = user.passkeyUserHandle
             }
         }
 
@@ -106,10 +135,12 @@ class UserRepository(
         }
     }
 
-    private fun generateUserHandle(): String {
+    fun generateUserHandle(): String {
         val bytes = ByteArray(USER_HANDLE_BYTES).also { secureRandom.nextBytes(it) }
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
+
+    private fun String.normalizedEmail(): String = trim().lowercase()
 
     private fun mapRow(row: ResultRow) =
         User(

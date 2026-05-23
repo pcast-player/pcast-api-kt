@@ -7,6 +7,8 @@ sealed class HttpError(
 ) {
     data object BadRequest : HttpError(statusCode = HttpStatusCode.BadRequest)
 
+    data object Conflict : HttpError(statusCode = HttpStatusCode.Conflict)
+
     data object NotFound : HttpError(statusCode = HttpStatusCode.NotFound)
 
     data object NoContent : HttpError(statusCode = HttpStatusCode.NoContent)

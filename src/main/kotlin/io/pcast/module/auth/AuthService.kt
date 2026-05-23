@@ -41,7 +41,7 @@ class AuthService(
         val user =
             userRepository
                 .findByEmail(email)
-                ?.takeIf { verifyPassword(password, it.passwordHash) }
+                ?.takeIf { it.passwordHash?.let { hash -> verifyPassword(password, hash) } == true }
 
         return user?.let { issueTokenPair(it) }
     }
@@ -74,10 +74,10 @@ class AuthService(
     ): User {
         val errors = validateNewPassword(password)
         require(errors.isEmpty()) { errors.joinToString("; ") }
-        return userRepository.create(email, hashPassword(password))
+        return userRepository.create(email.normalizedEmail(), hashPassword(password))
     }
 
-    fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
+    fun getUserByEmail(email: String): User? = userRepository.findByEmail(email.normalizedEmail())
 
     fun issueTokenPair(user: User): TokenResponse {
         val accessToken = generateAccessToken(user)
@@ -135,4 +135,6 @@ class AuthService(
         password: String,
         hash: String,
     ): Boolean = verifier.verify(password.toCharArray(), hash).verified
+
+    private fun String.normalizedEmail(): String = trim().lowercase()
 }

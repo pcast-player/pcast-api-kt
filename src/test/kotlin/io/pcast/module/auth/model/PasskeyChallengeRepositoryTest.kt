@@ -34,6 +34,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = challenge,
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().plusMinutes(5),
+                email = null,
+                passkeyUserHandle = null,
             )
 
             val consumed = repository.consume(challenge, PasskeyChallengeType.Authentication)
@@ -56,6 +58,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = challenge,
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().minusMinutes(1),
+                email = null,
+                passkeyUserHandle = null,
             )
 
             assertNull(repository.consume(challenge, PasskeyChallengeType.Authentication))
@@ -73,6 +77,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = challenge,
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().plusMinutes(5),
+                email = null,
+                passkeyUserHandle = null,
             )
 
             val executor = Executors.newFixedThreadPool(CONCURRENT_ATTEMPTS)
@@ -109,6 +115,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = "expired-${UUID.randomUUID()}",
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().minusMinutes(1),
+                email = null,
+                passkeyUserHandle = null,
             )
             repository.create(
                 userId = null,
@@ -116,6 +124,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = consumedChallenge,
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().plusMinutes(5),
+                email = null,
+                passkeyUserHandle = null,
             )
             repository.consume(consumedChallenge, PasskeyChallengeType.Authentication)
             repository.create(
@@ -124,6 +134,8 @@ internal class PasskeyChallengeRepositoryTest {
                 challenge = "active-${UUID.randomUUID()}",
                 requestJson = REQUEST_JSON,
                 expiresAt = LocalDateTime.now().plusMinutes(5),
+                email = null,
+                passkeyUserHandle = null,
             )
 
             val remainingRows =
@@ -138,6 +150,29 @@ internal class PasskeyChallengeRepositoryTest {
             assertEquals(1, remainingRows.size)
             assertTrue(remainingRows.single().first.isAfter(LocalDateTime.now()))
             assertNull(remainingRows.single().second)
+        }
+    }
+
+    @Test
+    fun testSignupChallengeStoresEmailAndPasskeyUserHandle() {
+        withRepository { _, repository ->
+            val challenge = "signup-${UUID.randomUUID()}"
+
+            repository.create(
+                userId = null,
+                type = PasskeyChallengeType.SignupRegistration,
+                challenge = challenge,
+                requestJson = REQUEST_JSON,
+                expiresAt = LocalDateTime.now().plusMinutes(5),
+                email = "listener@example.com",
+                passkeyUserHandle = "test-user-handle",
+            )
+
+            val consumed = repository.consume(challenge, PasskeyChallengeType.SignupRegistration)
+
+            assertNotNull(consumed)
+            assertEquals("listener@example.com", consumed.email)
+            assertEquals("test-user-handle", consumed.passkeyUserHandle)
         }
     }
 

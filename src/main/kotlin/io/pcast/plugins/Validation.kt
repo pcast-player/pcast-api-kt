@@ -5,6 +5,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.requestvalidation.RequestValidation
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
+import io.pcast.module.auth.passkey.request.PasskeySignupOptionsRequest
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.sync.request.ValidateSyncPhraseRequest
@@ -30,6 +31,14 @@ fun Application.configureValidation() {
         validate<PasskeyAuthenticationOptionsRequest> { req ->
             val email = req.email
             if (email != null && email.isNotBlank() && !EMAIL_REGEX.matches(email)) {
+                ValidationResult.Invalid("email: invalid format")
+            } else {
+                ValidationResult.Valid
+            }
+        }
+
+        validate<PasskeySignupOptionsRequest> { req ->
+            if (!EMAIL_REGEX.matches(req.email.trim())) {
                 ValidationResult.Invalid("email: invalid format")
             } else {
                 ValidationResult.Valid

@@ -20,6 +20,7 @@ import io.pcast.extensions.userId
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.passkey.PasskeyService
 import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
+import io.pcast.module.auth.passkey.request.PasskeySignupOptionsRequest
 import io.pcast.module.auth.passkey.response.PasskeyCredentialResponse
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
@@ -113,6 +114,21 @@ fun Route.registerAuthRoutes() {
     }
 
     rateLimit(RATE_LIMIT_PASSKEY) {
+        post("/auth/passkeys/signup/options") {
+            val request = call.receive<PasskeySignupOptionsRequest>()
+            val optionsJson = passkeyService.startSignupRegistration(request.normalizedEmail())
+
+            call.response.header(HttpHeaders.CacheControl, "no-store")
+            call.respondText(optionsJson, ContentType.Application.Json, HttpStatusCode.OK)
+        }
+
+        post("/auth/passkeys/signup/finish") {
+            val tokenResponse = passkeyService.finishSignupRegistration(call.receiveText())
+
+            call.response.header(HttpHeaders.CacheControl, "no-store")
+            call.respond(HttpStatusCode.Created, tokenResponse)
+        }
+
         post("/auth/passkeys/authentication/options") {
             val request = call.receive<PasskeyAuthenticationOptionsRequest>()
             val optionsJson = passkeyService.startAuthentication(request.email)
