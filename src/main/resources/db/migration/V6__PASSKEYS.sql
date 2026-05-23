@@ -37,3 +37,4 @@ CREATE TABLE passkey_challenges (
 
 CREATE INDEX passkey_challenges_challenge_idx ON passkey_challenges(challenge);
 CREATE INDEX passkey_challenges_expires_idx ON passkey_challenges(expires_at);
+CREATE INDEX passkey_challenges_consumed_idx ON passkey_challenges(consumed_at);

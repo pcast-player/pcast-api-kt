@@ -7,14 +7,20 @@ import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.StartAssertionOptions
 import com.yubico.webauthn.StartRegistrationOptions
 import com.yubico.webauthn.data.AttestationConveyancePreference
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ResidentKeyRequirement
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.exception.AssertionFailedException
+import com.yubico.webauthn.exception.RegistrationFailedException
 import io.pcast.config.Configuration
 import io.pcast.error.AbortError
 import io.pcast.error.HttpError
@@ -98,14 +104,7 @@ class PasskeyService(
 
         if (challenge.userId != userId) throw AbortError(HttpError.Unauthorized, "Unauthorized")
 
-        val result =
-            relyingParty.finishRegistration(
-                FinishRegistrationOptions
-                    .builder()
-                    .request(PublicKeyCredentialCreationOptions.fromJson(challenge.requestJson))
-                    .response(response)
-                    .build(),
-            )
+        val result = finishRegistrationOrAbort(challenge.requestJson, response)
 
         return credentialRepository.create(
             userId = userId,
@@ -146,14 +145,7 @@ class PasskeyService(
         val response = parseAssertionResponse(responseJson)
         val challenge =
             consumeChallenge(response.response.clientData.challenge.base64Url, PasskeyChallengeType.Authentication)
-        val result =
-            relyingParty.finishAssertion(
-                FinishAssertionOptions
-                    .builder()
-                    .request(AssertionRequest.fromJson(challenge.requestJson))
-                    .response(response)
-                    .build(),
-            )
+        val result = finishAssertionOrAbort(challenge.requestJson, response)
 
         if (!result.isSuccess) throw AbortError(HttpError.Unauthorized, "Unauthorized")
 
@@ -191,4 +183,40 @@ class PasskeyService(
     private fun parseAssertionResponse(responseJson: String) =
         runCatching { PublicKeyCredential.parseAssertionResponseJson(responseJson) }
             .getOrElse { throw AbortError(HttpError.BadRequest, "Invalid passkey authentication response", it) }
+
+    private fun finishRegistrationOrAbort(
+        requestJson: String,
+        response: PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>,
+    ) = runCatching {
+        relyingParty.finishRegistration(
+            FinishRegistrationOptions
+                .builder()
+                .request(PublicKeyCredentialCreationOptions.fromJson(requestJson))
+                .response(response)
+                .build(),
+        )
+    }.getOrElse { cause ->
+        if (cause is RegistrationFailedException) {
+            throw AbortError(HttpError.BadRequest, "Invalid passkey registration response", cause)
+        }
+        throw cause
+    }
+
+    private fun finishAssertionOrAbort(
+        requestJson: String,
+        response: PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>,
+    ) = runCatching {
+        relyingParty.finishAssertion(
+            FinishAssertionOptions
+                .builder()
+                .request(AssertionRequest.fromJson(requestJson))
+                .response(response)
+                .build(),
+        )
+    }.getOrElse { cause ->
+        if (cause is AssertionFailedException) {
+            throw AbortError(HttpError.Unauthorized, "Unauthorized", cause)
+        }
+        throw cause
+    }
 }

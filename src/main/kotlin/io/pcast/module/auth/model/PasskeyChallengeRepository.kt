@@ -5,13 +5,17 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.javatime.datetime
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.updateReturning
 import org.koin.core.annotation.Single
 import java.time.LocalDateTime
 import java.util.UUID
@@ -52,6 +56,8 @@ class PasskeyChallengeRepository(
                 createdAt = LocalDateTime.now(),
             )
 
+        purgeStale(LocalDateTime.now())
+
         transaction(db) {
             PasskeyChallengesTable.insert {
                 it[id] = pending.id
@@ -73,23 +79,28 @@ class PasskeyChallengeRepository(
         type: PasskeyChallengeType,
     ): PasskeyChallenge? =
         transaction(db) {
-            val pending =
-                PasskeyChallengesTable
-                    .selectAll()
-                    .where {
+            val now = LocalDateTime.now()
+
+            PasskeyChallengesTable
+                .updateReturning(
+                    returning = PasskeyChallengesTable.columns,
+                    where = {
                         (PasskeyChallengesTable.challenge eq challenge) and
                             (PasskeyChallengesTable.type eq type.name) and
-                            PasskeyChallengesTable.consumedAt.isNull()
-                    }.map(::mapRow)
-                    .singleOrNull()
-                    ?.takeIf { it.expiresAt.isAfter(LocalDateTime.now()) }
-                    ?: return@transaction null
+                            PasskeyChallengesTable.consumedAt.isNull() and
+                            (PasskeyChallengesTable.expiresAt greater now)
+                    },
+                ) {
+                    it[consumedAt] = now
+                }.map(::mapRow)
+                .singleOrNull()
+        }
 
-            PasskeyChallengesTable.update({ PasskeyChallengesTable.id eq pending.id }) {
-                it[consumedAt] = LocalDateTime.now()
+    fun purgeStale(now: LocalDateTime): Int =
+        transaction(db) {
+            PasskeyChallengesTable.deleteWhere {
+                (expiresAt lessEq now) or consumedAt.isNotNull()
             }
-
-            pending
         }
 
     private fun mapRow(row: ResultRow) =
