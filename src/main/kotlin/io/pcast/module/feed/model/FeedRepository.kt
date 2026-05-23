@@ -110,6 +110,18 @@ class FeedRepository(
             FeedsTable.deleteWhere { (FeedsTable.nanoId eq nanoId) and (FeedsTable.userId eq ownerId) } > 0
         }
 
+    fun updateSynchronizedAt(
+        feed: Feed,
+        synchronizedAt: java.time.LocalDateTime,
+    ): Feed {
+        transaction(db) {
+            FeedsTable.update({ FeedsTable.id eq feed.id }) {
+                it[FeedsTable.synchronizedAt] = synchronizedAt
+            }
+        }
+        return feed.copy(synchronizedAt = synchronizedAt)
+    }
+
     private fun mapRow(row: ResultRow) =
         Feed(
             id = row[FeedsTable.id].value,

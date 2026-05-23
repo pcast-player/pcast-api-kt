@@ -242,6 +242,36 @@ internal class FeedRouterTest : KoinTest {
         }
 
     @Test
+    fun testSyncFeedRejectsUnsupportedScheme() =
+        testApplication {
+            val ctx = configureServerAndGetContext(seedFeeds = false)
+            feedRepository.create(feed(200, ctx.userId).copy(url = "file:///etc/passwd"))
+            val feed = feedRepository.findAll(ctx.userId).single()
+
+            ctx.client
+                .post("/api/feeds/${feed.nanoId}/sync") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
+    @Test
+    fun testSyncFeedRejectsPrivateHost() =
+        testApplication {
+            val ctx = configureServerAndGetContext(seedFeeds = false)
+            feedRepository.create(feed(201, ctx.userId).copy(url = "http://127.0.0.1/feed.xml"))
+            val feed = feedRepository.findAll(ctx.userId).single()
+
+            ctx.client
+                .post("/api/feeds/${feed.nanoId}/sync") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
+    @Test
     fun testUserCannotAccessOtherUsersFeed() =
         testApplication {
             val ctx1 = configureServerAndGetContext()

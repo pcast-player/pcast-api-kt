@@ -54,8 +54,14 @@ object EpisodeProgressTable : Table("episode_progress") {
 class EpisodeRepository(
     private val db: Database,
 ) {
-    fun upsert(episode: Episode): Episode {
+    fun upsert(episode: Episode): Boolean =
         transaction(db) {
+            val exists =
+                EpisodesTable
+                    .selectAll()
+                    .where { (EpisodesTable.feedId eq episode.feedId) and (EpisodesTable.guid eq episode.guid) }
+                    .singleOrNull() != null
+
             EpisodesTable.upsert(EpisodesTable.feedId, EpisodesTable.guid) {
                 it[id] = episode.id
                 it[feedId] = episode.feedId
@@ -70,9 +76,8 @@ class EpisodeRepository(
                 it[createdAt] = episode.createdAt
                 it[updatedAt] = episode.updatedAt
             }
+            !exists
         }
-        return episode
-    }
 
     fun listForUser(
         userId: UUID,

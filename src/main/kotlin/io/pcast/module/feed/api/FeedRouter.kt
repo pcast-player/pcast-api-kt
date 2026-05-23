@@ -16,6 +16,7 @@ import io.pcast.module.feed.FeedService
 import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
+import io.pcast.module.feed.response.FeedSyncResponse
 import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.serialization.XML
 import org.koin.ktor.ext.inject
@@ -71,6 +72,13 @@ fun Route.registerFeedRoutes() {
         service.deleteFeed(id, userId)
 
         call.respond(HttpStatusCode.NoContent)
+    }
+
+    post("/feeds/{id}/sync") {
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
+        val userId = call.userId()
+
+        call.respond(FeedSyncResponse(service.syncFeed(id, userId)))
     }
 
     post("/feeds/opml") {

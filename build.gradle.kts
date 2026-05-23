@@ -13,6 +13,7 @@ val xmlUtilVersion: String by project
 val koinVersion: String by project
 val koinAnnotationsVersion: String by project
 val webauthnVersion: String by project
+val romeVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.3.21"
@@ -85,6 +86,8 @@ dependencies {
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
     implementation("at.favre.lib:bcrypt:0.10.2")
     implementation("com.yubico:webauthn-server-core:$webauthnVersion")
+    implementation("com.rometools:rome:$romeVersion")
+    implementation("com.rometools:rome-modules:$romeVersion")
 
     // Exposed + database drivers
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
