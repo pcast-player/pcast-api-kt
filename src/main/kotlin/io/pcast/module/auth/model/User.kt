@@ -9,4 +9,5 @@ data class User(
     val passwordHash: String,
     val createdAt: LocalDateTime,
     val tokenVersion: Int = 0,
+    val passkeyUserHandle: String,
 )

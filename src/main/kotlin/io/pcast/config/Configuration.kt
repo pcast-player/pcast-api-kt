@@ -4,10 +4,19 @@ data class Configuration(
     val database: Database,
     val jwt: JwtConfig,
     val cors: CorsConfig = CorsConfig(),
+    val passkey: PasskeyConfig = PasskeyConfig(),
 )
 
 data class CorsConfig(
     val allowedOrigins: List<String> = emptyList(),
+)
+
+data class PasskeyConfig(
+    val rpId: String = "localhost",
+    val rpName: String = "pcast",
+    val allowedOrigins: List<String> = listOf("http://localhost:3000"),
+    val challengeTtlSeconds: Long = 300,
+    val timeoutMillis: Long = 60000,
 )
 
 data class JwtConfig(
