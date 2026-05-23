@@ -5,6 +5,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
@@ -34,11 +35,7 @@ fun Route.registerFeedRoutes() {
         val userId = call.userId()
         val feeds = service.getFeeds(userId)
 
-        if (feeds.isNotEmpty()) {
-            call.respond(feeds.map(::FeedResponse))
-        } else {
-            throw AbortError(HttpError.NoContent, "No feeds found.")
-        }
+        call.respond(feeds.map(::FeedResponse))
     }
 
     post("/feeds") {
@@ -63,6 +60,15 @@ fun Route.registerFeedRoutes() {
         val request = call.receive<FeedRequest>()
 
         service.updateFeed(id, request, userId)
+
+        call.respond(HttpStatusCode.NoContent)
+    }
+
+    delete("/feeds/{id}") {
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
+        val userId = call.userId()
+
+        service.deleteFeed(id, userId)
 
         call.respond(HttpStatusCode.NoContent)
     }

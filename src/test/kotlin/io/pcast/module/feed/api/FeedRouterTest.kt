@@ -4,6 +4,7 @@ import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -91,6 +92,20 @@ internal class FeedRouterTest : KoinTest {
                     assertEquals(HttpStatusCode.OK, status)
                     val feeds = body<List<FeedResponse>>()
                     assertEquals(10, feeds.size)
+                }
+        }
+
+    @Test
+    fun testGetFeedsReturnsEmptyList() =
+        testApplication {
+            val ctx = configureServerAndGetContext(seedFeeds = false)
+
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(emptyList(), body<List<FeedResponse>>())
                 }
         }
 
@@ -191,6 +206,42 @@ internal class FeedRouterTest : KoinTest {
         }
 
     @Test
+    fun testDeleteFeed() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val feed = feedRepository.findAll(ctx.userId).first()
+
+            ctx.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NoContent, status)
+                }
+
+            ctx.client
+                .get("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
+    fun testUserCannotDeleteOtherUsersFeed() =
+        testApplication {
+            val ctx1 = configureServerAndGetContext()
+            val ctx2 = loginSecondUser(ctx1.client)
+            val feed = feedRepository.findAll(ctx1.userId).first()
+
+            ctx1.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx2)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
     fun testUserCannotAccessOtherUsersFeed() =
         testApplication {
             val ctx1 = configureServerAndGetContext()
@@ -270,7 +321,7 @@ internal class FeedRouterTest : KoinTest {
 
     private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
 
-    private suspend fun ApplicationTestBuilder.configureServerAndGetContext(): TestContext {
+    private suspend fun ApplicationTestBuilder.configureServerAndGetContext(seedFeeds: Boolean = true): TestContext {
         application {
             hardenXmlParser()
 
@@ -307,7 +358,9 @@ internal class FeedRouterTest : KoinTest {
                 }.body<TokenResponse>()
 
         val user = authService.getUserByEmail(TEST_EMAIL)!!
-        addTestData(user.id)
+        if (seedFeeds) {
+            addTestData(user.id)
+        }
 
         return TestContext(client, tokenResponse.accessToken, user.id)
     }

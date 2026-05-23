@@ -102,6 +102,14 @@ class FeedRepository(
         }
     }
 
+    fun deleteByNanoId(
+        nanoId: String,
+        ownerId: UUID,
+    ): Boolean =
+        transaction(db) {
+            FeedsTable.deleteWhere { (FeedsTable.nanoId eq nanoId) and (FeedsTable.userId eq ownerId) } > 0
+        }
+
     private fun mapRow(row: ResultRow) =
         Feed(
             id = row[FeedsTable.id].value,
