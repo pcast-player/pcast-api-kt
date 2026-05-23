@@ -62,7 +62,11 @@ class EpisodeRepository(
                     .where { (EpisodesTable.feedId eq episode.feedId) and (EpisodesTable.guid eq episode.guid) }
                     .singleOrNull() != null
 
-            EpisodesTable.upsert(EpisodesTable.feedId, EpisodesTable.guid) {
+            EpisodesTable.upsert(
+                EpisodesTable.feedId,
+                EpisodesTable.guid,
+                onUpdateExclude = listOf(EpisodesTable.id, EpisodesTable.createdAt),
+            ) {
                 it[id] = episode.id
                 it[feedId] = episode.feedId
                 it[guid] = episode.guid
