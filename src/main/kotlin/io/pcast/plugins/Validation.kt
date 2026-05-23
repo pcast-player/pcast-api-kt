@@ -4,6 +4,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.requestvalidation.RequestValidation
 import io.ktor.server.plugins.requestvalidation.ValidationResult
+import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.sync.request.ValidateSyncPhraseRequest
@@ -24,6 +25,15 @@ fun Application.configureValidation() {
                 errors += "password: exceeds maximum of $PASSWORD_MAX_BYTES bytes"
             }
             if (errors.isEmpty()) ValidationResult.Valid else ValidationResult.Invalid(errors.joinToString("; "))
+        }
+
+        validate<PasskeyAuthenticationOptionsRequest> { req ->
+            val email = req.email
+            if (email != null && email.isNotBlank() && !EMAIL_REGEX.matches(email)) {
+                ValidationResult.Invalid("email: invalid format")
+            } else {
+                ValidationResult.Valid
+            }
         }
 
         validate<FeedRequest> { req ->

@@ -16,6 +16,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 val RATE_LIMIT_LOGIN = RateLimitName("login")
 val RATE_LIMIT_REFRESH = RateLimitName("refresh")
+val RATE_LIMIT_PASSKEY = RateLimitName("passkey")
 
 fun Application.configureRateLimit() {
     install(RateLimit) {
@@ -32,6 +33,14 @@ fun Application.configureRateLimit() {
         // Refresh: 30 attempts per minute per IP address.
         register(RATE_LIMIT_REFRESH) {
             rateLimiter(limit = 30, refillPeriod = 1.minutes)
+            requestKey { call ->
+                call.request.local.remoteAddress
+            }
+        }
+
+        // Passkey ceremonies are cheaper than bcrypt login but still user-visible auth attempts.
+        register(RATE_LIMIT_PASSKEY) {
+            rateLimiter(limit = 20, refillPeriod = 1.minutes)
             requestKey { call ->
                 call.request.local.remoteAddress
             }

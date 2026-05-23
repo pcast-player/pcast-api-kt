@@ -11,22 +11,28 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.annotation.Single
+import java.security.SecureRandom
 import java.time.LocalDateTime
+import java.util.Base64
 import java.util.UUID
 
 private const val VARCHAR_MAX_LENGTH = 255
+private const val USER_HANDLE_BYTES = 64
 
 object UsersTable : UUIDTable("users") {
     val email = varchar("email", VARCHAR_MAX_LENGTH).uniqueIndex()
     val passwordHash = varchar("password_hash", VARCHAR_MAX_LENGTH)
     val createdAt = datetime("created_at")
     val tokenVersion = integer("token_version").default(0)
+    val passkeyUserHandle = varchar("passkey_user_handle", VARCHAR_MAX_LENGTH).uniqueIndex()
 }
 
 @Single
 class UserRepository(
     private val db: Database,
 ) {
+    private val secureRandom = SecureRandom()
+
     fun findByEmail(email: String): User? =
         transaction(db) {
             UsersTable
@@ -45,6 +51,15 @@ class UserRepository(
                 .singleOrNull()
         }
 
+    fun findByPasskeyUserHandle(userHandle: String): User? =
+        transaction(db) {
+            UsersTable
+                .selectAll()
+                .where { UsersTable.passkeyUserHandle eq userHandle }
+                .map(::mapRow)
+                .singleOrNull()
+        }
+
     fun create(
         email: String,
         passwordHash: String,
@@ -56,6 +71,7 @@ class UserRepository(
                 passwordHash = passwordHash,
                 createdAt = LocalDateTime.now(),
                 tokenVersion = 0,
+                passkeyUserHandle = generateUserHandle(),
             )
 
         transaction(db) {
@@ -65,6 +81,7 @@ class UserRepository(
                 it[UsersTable.passwordHash] = user.passwordHash
                 it[createdAt] = user.createdAt
                 it[tokenVersion] = user.tokenVersion
+                it[passkeyUserHandle] = user.passkeyUserHandle
             }
         }
 
@@ -89,6 +106,11 @@ class UserRepository(
         }
     }
 
+    private fun generateUserHandle(): String {
+        val bytes = ByteArray(USER_HANDLE_BYTES).also { secureRandom.nextBytes(it) }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
     private fun mapRow(row: ResultRow) =
         User(
             id = row[UsersTable.id].value,
@@ -96,5 +118,6 @@ class UserRepository(
             passwordHash = row[UsersTable.passwordHash],
             createdAt = row[UsersTable.createdAt],
             tokenVersion = row[UsersTable.tokenVersion],
+            passkeyUserHandle = row[UsersTable.passkeyUserHandle],
         )
 }

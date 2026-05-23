@@ -43,7 +43,7 @@ class AuthService(
                 .findByEmail(email)
                 ?.takeIf { verifyPassword(password, it.passwordHash) }
 
-        return user?.let { generateTokenPair(it) }
+        return user?.let { issueTokenPair(it) }
     }
 
     fun refresh(refreshToken: String): TokenResponse? {
@@ -56,7 +56,7 @@ class AuthService(
 
         refreshTokenRepository.deleteByTokenHash(tokenHash)
 
-        return userRepository.findById(storedToken.userId)?.let { generateTokenPair(it) }
+        return userRepository.findById(storedToken.userId)?.let { issueTokenPair(it) }
     }
 
     fun logout(refreshToken: String): Boolean {
@@ -79,7 +79,7 @@ class AuthService(
 
     fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
 
-    private fun generateTokenPair(user: User): TokenResponse {
+    fun issueTokenPair(user: User): TokenResponse {
         val accessToken = generateAccessToken(user)
         val refreshToken = generateRefreshToken(user)
 

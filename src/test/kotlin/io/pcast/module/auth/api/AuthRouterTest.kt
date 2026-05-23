@@ -2,10 +2,14 @@ package io.pcast.module.auth.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -16,6 +20,8 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.pcast.module.AppModule
 import io.pcast.module.auth.AuthService
+import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
+import io.pcast.module.auth.passkey.response.PasskeyCredentialResponse
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
 import io.pcast.module.auth.response.TokenResponse
@@ -205,7 +211,87 @@ internal class AuthRouterTest : KoinTest {
                 }
         }
 
+    @Test
+    fun testPasskeyRegistrationOptionsRequiresAuthentication() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/registration/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }.expect {
+                    assertEquals(HttpStatusCode.Unauthorized, status)
+                }
+        }
+
+    @Test
+    fun testPasskeyRegistrationOptionsSuccess() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val loginResponse = login(client)
+
+            client
+                .post("/api/auth/passkeys/registration/options") {
+                    bearerAuth(loginResponse.accessToken)
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertTrue(bodyAsText().contains("\"publicKey\""))
+                }
+        }
+
+    @Test
+    fun testListPasskeysStartsEmpty() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val loginResponse = login(client)
+
+            client
+                .get("/api/auth/passkeys") {
+                    bearerAuth(loginResponse.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(emptyList<PasskeyCredentialResponse>(), body<List<PasskeyCredentialResponse>>())
+                }
+        }
+
+    @Test
+    fun testPasskeyAuthenticationOptionsSuccess() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/authentication/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(PasskeyAuthenticationOptionsRequest(TEST_EMAIL))
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertTrue(bodyAsText().contains("\"publicKey\""))
+                }
+        }
+
+    @Test
+    fun testPasskeyAuthenticationOptionsInvalidEmail() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/authentication/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(PasskeyAuthenticationOptionsRequest("invalid-email"))
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
     private inline fun HttpResponse.expect(test: HttpResponse.() -> Unit) = apply(test)
+
+    private suspend fun login(client: HttpClient): TokenResponse =
+        client
+            .post("/api/auth/login") {
+                header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                setBody(LoginRequest(TEST_EMAIL, TEST_PASSWORD))
+            }.body()
 
     private fun ApplicationTestBuilder.configureServerAndGetClient(): HttpClient {
         application {

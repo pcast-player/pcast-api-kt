@@ -12,6 +12,7 @@ val hopliteVersion: String by project
 val xmlUtilVersion: String by project
 val koinVersion: String by project
 val koinAnnotationsVersion: String by project
+val webauthnVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.3.21"
@@ -83,6 +84,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
     implementation("at.favre.lib:bcrypt:0.10.2")
+    implementation("com.yubico:webauthn-server-core:$webauthnVersion")
 
     // Exposed + database drivers
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")

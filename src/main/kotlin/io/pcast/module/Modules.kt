@@ -24,6 +24,7 @@ val configModule =
             buildConfigurationFromFiles().also { config ->
                 validateJwtSecret(config.jwt.secret)
                 validateDatabaseCredentials(config)
+                validatePasskeyConfig(config)
             }
         }
     }
@@ -88,5 +89,23 @@ private fun validateJwtSecret(secret: String) {
     require(secret.length >= 32) {
         val length = secret.length
         "JWT secret must be at least 32 characters long for security. Current length: $length"
+    }
+}
+
+private fun validatePasskeyConfig(config: Configuration) {
+    require(config.passkey.rpId.isNotBlank()) {
+        "passkey.rpId must not be blank."
+    }
+    require(config.passkey.rpName.isNotBlank()) {
+        "passkey.rpName must not be blank."
+    }
+    require(config.passkey.allowedOrigins.isNotEmpty()) {
+        "passkey.allowedOrigins must include at least one web client origin."
+    }
+    require(config.passkey.challengeTtlSeconds in 60..600) {
+        "passkey.challengeTtlSeconds must be between 60 and 600 seconds."
+    }
+    require(config.passkey.timeoutMillis in 1000..300000) {
+        "passkey.timeoutMillis must be between 1000 and 300000 milliseconds."
     }
 }
