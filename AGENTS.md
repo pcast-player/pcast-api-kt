@@ -4,12 +4,12 @@ This document provides guidelines for AI coding agents working in this Kotlin/Kt
 
 ## Project Overview
 
-- **Language**: Kotlin 2.3.0
-- **Framework**: Ktor 3.3.3 (REST API)
-- **Build System**: Gradle 9.2.1 with Kotlin DSL
-- **JVM Target**: Java 21 (Amazon Corretto)
+- **Language**: Kotlin 2.3.21
+- **Framework**: Ktor 3.5.0 (REST API)
+- **Build System**: Gradle 9.5.1 with Kotlin DSL
+- **JVM/CI Target**: Java 25
 - **DI Framework**: Koin
-- **Database**: Exposed ORM with PostgreSQL (production) / H2 (testing)
+- **Database**: Exposed ORM with PostgreSQL (local/production) / Testcontainers PostgreSQL (testing)
 - **Migrations**: Flyway
 
 ## Build Commands
@@ -41,18 +41,20 @@ Tests use:
 - JUnit 5 with `kotlin-test` assertions
 - Ktor test host (`testApplication { }`)
 - Koin test support (extend `KoinTest`, use `by inject<T>()`)
-- H2 in-memory database via `testDbModule`
+- Testcontainers PostgreSQL via `testDbModule`
 
 ## Linting & Formatting
 
 ```bash
 ./gradlew spotlessCheck      # Check code formatting (ktlint)
 ./gradlew spotlessApply      # Auto-fix formatting issues
-./gradlew detekt             # Run static analysis
-./gradlew detektBaseline     # Generate baseline for existing issues
+# Detekt config exists, but the Gradle plugin is currently commented out.
+# Re-enable the plugin in build.gradle.kts before relying on these commands:
+# ./gradlew detekt           # Run static analysis
+# ./gradlew detektBaseline   # Generate baseline for existing issues
 ```
 
-Pre-commit hooks run `detekt` and `spotlessCheck` automatically.
+Pre-commit hooks may run project checks, but `detekt` is currently disabled in Gradle. Confirm local hook behavior before assuming it matches CI.
 
 ## Code Style Guidelines
 
@@ -85,7 +87,7 @@ Pre-commit hooks run `detekt` and `spotlessCheck` automatically.
 ### Type Safety
 
 - Prefer non-nullable types; use `?` only when null is a valid state
-- Use `val` over `var` (enforced by detekt `VarCouldBeVal`)
+- Use `val` over `var` where possible
 - Avoid platform types - always specify explicit types for Java interop
 - Use sealed classes for restricted hierarchies (see `HttpError`)
 
@@ -113,7 +115,7 @@ data class FeedResponse(val id: UUID, val title: String) {
 - Use sealed class `HttpError` for HTTP status codes
 - Throw `AbortError(HttpError.*, "message")` to abort with status
 - Catch specific exceptions, not generic `Exception`/`Throwable` where possible
-- Never swallow exceptions silently (enforced by detekt)
+- Never swallow exceptions silently (covered by the Detekt config when Detekt is enabled)
 
 ```kotlin
 throw AbortError(HttpError.NotFound, "Feed not found for ID $id")
@@ -179,7 +181,9 @@ src/main/kotlin/io/pcast/
 └── serializer/             # Custom kotlinx serializers
 ```
 
-### Complexity Limits (detekt)
+### Complexity Limits (detekt config)
+
+Detekt is currently disabled in Gradle, but `config/detekt/detekt.yml` records the intended limits:
 
 - Max method length: 60 lines
 - Max class size: 600 lines
@@ -200,12 +204,12 @@ Conventional commits are enforced by pre-commit hooks:
 
 ## CI Pipeline
 
-The GitHub Actions workflow runs on push/PR to main:
-1. `./gradlew detekt` - Static analysis
+The GitHub Actions workflow runs on push/PR to main with Java 25:
+1. `docker version` - Confirm Docker is available for Testcontainers
 2. `./gradlew spotlessCheck` - Code formatting
 3. `./gradlew build` - Build and test
 
-Ensure all three pass before pushing.
+The Detekt CI step is currently commented out. Ensure the active workflow checks pass before pushing.
 
 ## Environment Variables
 
