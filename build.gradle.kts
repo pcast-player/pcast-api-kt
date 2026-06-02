@@ -6,6 +6,7 @@ val ktorVersion: String by project
 val exposedVersion: String by project
 val flywayVersion: String by project
 val hikariVersion: String by project
+val jacksonVersion: String by project
 val postgresVersion: String by project
 val testcontainersVersion: String by project
 val hopliteVersion: String by project
@@ -18,9 +19,9 @@ plugins {
     kotlin("jvm") version "2.3.21"
     id("io.ktor.plugin") version "3.5.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.21"
-    id("com.diffplug.spotless") version "8.5.1"
+    id("com.diffplug.spotless") version "8.6.0"
     // id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.3.8"
+    id("com.google.devtools.ksp") version "2.3.9"
 }
 
 group = "io.pcast"
@@ -67,6 +68,9 @@ repositories {
 }
 
 dependencies {
+    // Ktor/WebAuthn currently request Jackson 2.22.0 transitively, but Maven Central publishes 2.21.4.
+    implementation(enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")

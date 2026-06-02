@@ -8,6 +8,7 @@ This document provides guidelines for AI coding agents working in this Kotlin/Kt
 - **Framework**: Ktor 3.5.0 (REST API)
 - **Build System**: Gradle 9.5.1 with Kotlin DSL
 - **JVM/CI Target**: Java 25
+- **Local Toolchain**: Mise (`mise.toml`) pins Java `temurin-25.0.2+10.0.LTS`; run local Gradle commands through `mise exec --`.
 - **DI Framework**: Koin
 - **Database**: Exposed ORM with PostgreSQL (local/production) / Testcontainers PostgreSQL (testing)
 - **Migrations**: Flyway
@@ -15,26 +16,26 @@ This document provides guidelines for AI coding agents working in this Kotlin/Kt
 ## Build Commands
 
 ```bash
-./gradlew build              # Build the project (includes tests)
-./gradlew run                # Run the application
-./gradlew shadowJar          # Build fat JAR for deployment
-./gradlew clean              # Clean build artifacts
+mise exec -- ./gradlew build              # Build the project (includes tests)
+mise exec -- ./gradlew run                # Run the application
+mise exec -- ./gradlew shadowJar          # Build fat JAR for deployment
+mise exec -- ./gradlew clean              # Clean build artifacts
 ```
 
 ## Testing
 
 ```bash
 # Run all tests
-./gradlew test
+mise exec -- ./gradlew test
 
 # Run a single test class
-./gradlew test --tests "io.pcast.module.feed.api.FeedRouterTest"
+mise exec -- ./gradlew test --tests "io.pcast.module.feed.api.FeedRouterTest"
 
 # Run a single test method
-./gradlew test --tests "io.pcast.module.feed.api.FeedRouterTest.testGetFeeds"
+mise exec -- ./gradlew test --tests "io.pcast.module.feed.api.FeedRouterTest.testGetFeeds"
 
 # Run tests matching a pattern
-./gradlew test --tests "*FeedRouter*"
+mise exec -- ./gradlew test --tests "*FeedRouter*"
 ```
 
 Tests use:
@@ -46,12 +47,12 @@ Tests use:
 ## Linting & Formatting
 
 ```bash
-./gradlew spotlessCheck      # Check code formatting (ktlint)
-./gradlew spotlessApply      # Auto-fix formatting issues
+mise exec -- ./gradlew spotlessCheck      # Check code formatting (ktlint)
+mise exec -- ./gradlew spotlessApply      # Auto-fix formatting issues
 # Detekt config exists, but the Gradle plugin is currently commented out.
 # Re-enable the plugin in build.gradle.kts before relying on these commands:
-# ./gradlew detekt           # Run static analysis
-# ./gradlew detektBaseline   # Generate baseline for existing issues
+# mise exec -- ./gradlew detekt           # Run static analysis
+# mise exec -- ./gradlew detektBaseline   # Generate baseline for existing issues
 ```
 
 Pre-commit hooks may run project checks, but `detekt` is currently disabled in Gradle. Confirm local hook behavior before assuming it matches CI.
