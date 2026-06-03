@@ -4,7 +4,7 @@
 
 ## Tech Stack
 
-- Kotlin 2.3.21
+- Kotlin 2.4.0
 - Ktor 3.5.0 with Netty
 - Gradle wrapper 9.5.1 with Kotlin DSL
 - Koin annotations and KSP for dependency injection

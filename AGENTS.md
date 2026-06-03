@@ -4,7 +4,7 @@ This document provides guidelines for AI coding agents working in this Kotlin/Kt
 
 ## Project Overview
 
-- **Language**: Kotlin 2.3.21
+- **Language**: Kotlin 2.4.0
 - **Framework**: Ktor 3.5.0 (REST API)
 - **Build System**: Gradle 9.5.1 with Kotlin DSL
 - **JVM/CI Target**: Java 25
