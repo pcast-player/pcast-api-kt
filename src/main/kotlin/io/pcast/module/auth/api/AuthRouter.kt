@@ -23,10 +23,12 @@ import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
 import io.pcast.module.auth.passkey.response.PasskeyCredentialResponse
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
+import io.pcast.module.auth.request.RegisterRequest
 import io.pcast.plugins.JWT_AUTH_NAME
 import io.pcast.plugins.RATE_LIMIT_LOGIN
 import io.pcast.plugins.RATE_LIMIT_PASSKEY
 import io.pcast.plugins.RATE_LIMIT_REFRESH
+import io.pcast.plugins.RATE_LIMIT_REGISTER
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -36,6 +38,17 @@ private val log = LoggerFactory.getLogger("AuthRouter")
 fun Route.registerAuthRoutes() {
     val authService by inject<AuthService>()
     val passkeyService by inject<PasskeyService>()
+
+    rateLimit(RATE_LIMIT_REGISTER) {
+        post("/auth/register") {
+            val request = call.receive<RegisterRequest>()
+
+            val tokenResponse = authService.register(request.email, request.password)
+
+            call.response.header(HttpHeaders.CacheControl, "no-store")
+            call.respond(HttpStatusCode.Created, tokenResponse)
+        }
+    }
 
     rateLimit(RATE_LIMIT_LOGIN) {
         post("/auth/login") {

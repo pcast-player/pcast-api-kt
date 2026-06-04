@@ -2,6 +2,8 @@ package io.pcast.module.auth
 
 import at.favre.lib.crypto.bcrypt.BCrypt
 import io.pcast.config.Configuration
+import io.pcast.error.AbortError
+import io.pcast.error.HttpError
 import io.pcast.extensions.jwt
 import io.pcast.extensions.withExpiresIn
 import io.pcast.module.auth.model.RefreshTokenRepository
@@ -66,6 +68,24 @@ class AuthService(
         // Invalidate all outstanding access tokens by bumping the token version.
         userRepository.incrementTokenVersion(storedToken.userId)
         return refreshTokenRepository.deleteByTokenHash(tokenHash)
+    }
+
+    /**
+     * Registers a new account and immediately issues a token pair (auto-login).
+     * Password/email format are enforced upstream by RequestValidation; a duplicate
+     * email is rejected here with 409 Conflict (the users.email unique index is the
+     * authoritative guard).
+     */
+    fun register(
+        email: String,
+        password: String,
+    ): TokenResponse {
+        if (userRepository.findByEmail(email) != null) {
+            throw AbortError(HttpError.Conflict, "Email already registered")
+        }
+
+        val user = createUser(email, password)
+        return issueTokenPair(user)
     }
 
     fun createUser(

@@ -24,6 +24,7 @@ import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
 import io.pcast.module.auth.passkey.response.PasskeyCredentialResponse
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
+import io.pcast.module.auth.request.RegisterRequest
 import io.pcast.module.auth.response.TokenResponse
 import io.pcast.module.testConfigModule
 import io.pcast.module.testDbModule
@@ -48,6 +49,94 @@ private const val TEST_PASSWORD = "testpassword123"
 
 internal class AuthRouterTest : KoinTest {
     private val authService by inject<AuthService>()
+
+    @Test
+    fun testRegisterSuccess() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/register") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(RegisterRequest("newuser@example.com", "newpassword12345"))
+                }.expect {
+                    assertEquals(HttpStatusCode.Created, status)
+
+                    val response = body<TokenResponse>()
+
+                    assertNotNull(response.accessToken)
+                    assertNotNull(response.refreshToken)
+                    assertEquals("Bearer", response.tokenType)
+                    assertTrue(response.expiresIn > 0)
+                }
+        }
+
+    @Test
+    fun testRegisterDuplicateEmail() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            // TEST_EMAIL is already seeded
+            client
+                .post("/api/auth/register") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(RegisterRequest(TEST_EMAIL, "anotherpassword12345"))
+                }.expect {
+                    assertEquals(HttpStatusCode.Conflict, status)
+                }
+        }
+
+    @Test
+    fun testRegisterInvalidEmail() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/register") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(RegisterRequest("not-an-email", "validpassword12345"))
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
+    @Test
+    fun testRegisterShortPassword() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/register") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(RegisterRequest("shortpw@example.com", "short"))
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
+                }
+        }
+
+    @Test
+    fun testRegisteredUserCanLogin() =
+        testApplication {
+            val client = configureServerAndGetClient()
+            val email = "loginafterregister@example.com"
+            val password = "registerthenlogin12345"
+
+            client
+                .post("/api/auth/register") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(RegisterRequest(email, password))
+                }.expect {
+                    assertEquals(HttpStatusCode.Created, status)
+                }
+
+            client
+                .post("/api/auth/login") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(LoginRequest(email, password))
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                }
+        }
 
     @Test
     fun testLoginSuccess() =

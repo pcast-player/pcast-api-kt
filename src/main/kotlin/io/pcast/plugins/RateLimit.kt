@@ -15,6 +15,7 @@ import kotlin.time.Duration.Companion.minutes
  * in-memory store with a shared Redis-backed limiter.
  */
 val RATE_LIMIT_LOGIN = RateLimitName("login")
+val RATE_LIMIT_REGISTER = RateLimitName("register")
 val RATE_LIMIT_REFRESH = RateLimitName("refresh")
 val RATE_LIMIT_PASSKEY = RateLimitName("passkey")
 
@@ -24,6 +25,14 @@ fun Application.configureRateLimit() {
         // bcrypt at cost 12 provides ~200ms natural throttling per attempt,
         // but a distributed attack across many IPs still warrants a hard limit.
         register(RATE_LIMIT_LOGIN) {
+            rateLimiter(limit = 5, refillPeriod = 1.minutes)
+            requestKey { call ->
+                call.request.local.remoteAddress
+            }
+        }
+
+        // Registration: 5 accounts per minute per IP address to curb automated signup abuse.
+        register(RATE_LIMIT_REGISTER) {
             rateLimiter(limit = 5, refillPeriod = 1.minutes)
             requestKey { call ->
                 call.request.local.remoteAddress
