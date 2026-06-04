@@ -9,11 +9,28 @@ import io.pcast.module.feed.request.FeedRequest
 import org.koin.core.annotation.Single
 import java.util.UUID
 
+data class FeedPage(
+    val feeds: List<Feed>,
+    val total: Long,
+)
+
 @Single
 class FeedService(
     private val repository: FeedRepository,
 ) {
     fun getFeeds(userId: UUID): List<Feed> = repository.findAll(userId)
+
+    fun getFeeds(
+        userId: UUID,
+        page: Int,
+        pageSize: Int,
+    ): FeedPage {
+        val offset = (page - 1) * pageSize
+        return FeedPage(
+            feeds = repository.findPage(userId, limit = pageSize, offset = offset),
+            total = repository.count(userId),
+        )
+    }
 
     fun getFeed(
         nanoId: String,

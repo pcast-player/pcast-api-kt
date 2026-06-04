@@ -96,6 +96,100 @@ internal class FeedRouterTest : KoinTest {
         }
 
     @Test
+    fun testGetFeedsSetsTotalCountHeader() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("10", headers["X-Total-Count"])
+                }
+        }
+
+    @Test
+    fun testGetFeedsFirstPage() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds?page=1&pageSize=4") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("10", headers["X-Total-Count"])
+                    assertEquals(4, body<List<FeedResponse>>().size)
+                }
+        }
+
+    @Test
+    fun testGetFeedsLastPagePartial() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds?page=3&pageSize=4") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(2, body<List<FeedResponse>>().size)
+                }
+        }
+
+    @Test
+    fun testGetFeedsPagesDoNotOverlap() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            val page1 =
+                ctx.client
+                    .get("/api/feeds?page=1&pageSize=4") { bearerAuth(ctx.accessToken) }
+                    .body<List<FeedResponse>>()
+                    .map { it.nanoId }
+            val page2 =
+                ctx.client
+                    .get("/api/feeds?page=2&pageSize=4") { bearerAuth(ctx.accessToken) }
+                    .body<List<FeedResponse>>()
+                    .map { it.nanoId }
+
+            assertEquals(emptyList(), page1.intersect(page2.toSet()).toList())
+        }
+
+    @Test
+    fun testGetFeedsEmptyReturnsOkWithEmptyArray() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            // Second seeded user has no feeds
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(secondUserToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("0", headers["X-Total-Count"])
+                    assertEquals(emptyList(), body<List<FeedResponse>>())
+                }
+        }
+
+    @Test
+    fun testGetFeedsRejectsInvalidPagination() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            for (query in listOf("page=0", "pageSize=0", "page=abc", "pageSize=99999")) {
+                ctx.client
+                    .get("/api/feeds?$query") {
+                        bearerAuth(ctx.accessToken)
+                    }.expect {
+                        assertEquals(HttpStatusCode.BadRequest, status, "expected 400 for ?$query")
+                    }
+            }
+        }
+
+    @Test
     fun testGetFeed() =
         testApplication {
             val ctx = configureServerAndGetContext()

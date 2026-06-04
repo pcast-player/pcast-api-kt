@@ -3,6 +3,7 @@ package io.pcast.module.feed.api
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
@@ -20,6 +21,10 @@ import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.serialization.XML
 import org.koin.ktor.ext.inject
 
+private const val DEFAULT_PAGE = 1
+private const val DEFAULT_PAGE_SIZE = 50
+private const val MAX_PAGE_SIZE = 100
+
 private val OPML_XML =
     XML {
         repairNamespaces = true
@@ -33,13 +38,11 @@ fun Route.registerFeedRoutes() {
 
     get("/feeds") {
         val userId = call.userId()
-        val feeds = service.getFeeds(userId)
+        val (page, pageSize) = call.paginationParams()
+        val result = service.getFeeds(userId, page, pageSize)
 
-        if (feeds.isNotEmpty()) {
-            call.respond(feeds.map(::FeedResponse))
-        } else {
-            throw AbortError(HttpError.NoContent, "No feeds found.")
-        }
+        call.response.header("X-Total-Count", result.total.toString())
+        call.respond(result.feeds.map(::FeedResponse))
     }
 
     post("/feeds") {
@@ -84,6 +87,31 @@ fun Route.registerFeedRoutes() {
 
         call.respond(HttpStatusCode.Created, feeds)
     }
+}
+
+/**
+ * Parses 1-based `page` and `pageSize` query parameters, falling back to defaults when absent.
+ * Rejects non-numeric values, page < 1, pageSize < 1, and pageSize beyond [MAX_PAGE_SIZE] with 400.
+ */
+private fun io.ktor.server.application.ApplicationCall.paginationParams(): Pair<Int, Int> {
+    val page = parsePositiveIntParam("page", DEFAULT_PAGE)
+    val pageSize = parsePositiveIntParam("pageSize", DEFAULT_PAGE_SIZE)
+
+    if (pageSize > MAX_PAGE_SIZE) {
+        throw AbortError(HttpError.BadRequest, "pageSize must not exceed $MAX_PAGE_SIZE")
+    }
+
+    return page to pageSize
+}
+
+private fun io.ktor.server.application.ApplicationCall.parsePositiveIntParam(
+    name: String,
+    default: Int,
+): Int {
+    val raw = request.queryParameters[name] ?: return default
+    val value = raw.toIntOrNull() ?: throw AbortError(HttpError.BadRequest, "$name must be an integer")
+    if (value < 1) throw AbortError(HttpError.BadRequest, "$name must be >= 1")
+    return value
 }
 
 private suspend fun io.ktor.server.application.ApplicationCall.receiveOpmlFile(): OpmlFile {
