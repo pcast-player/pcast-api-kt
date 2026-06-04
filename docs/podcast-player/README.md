@@ -12,7 +12,7 @@ playback progress across devices.
 
 ## Current API Facts
 
-The current backend is a Kotlin 2.3.21 / Ktor 3.5.0 REST API with PostgreSQL, Flyway, Exposed, Koin annotations,
+The current backend is a Kotlin 2.4.0 / Ktor 3.5.0 REST API with PostgreSQL, Flyway, Exposed, Koin annotations,
 JWT access tokens, refresh-token rotation, and passkey/WebAuthn support. The service currently supports authenticated
 feed subscription management, OPML import, passkey management for already-authenticated users, and a few sync helper
 endpoints.
