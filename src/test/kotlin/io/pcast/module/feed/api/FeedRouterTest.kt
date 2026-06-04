@@ -11,6 +11,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -30,6 +31,7 @@ import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.response.TokenResponse
 import io.pcast.module.feed.model.Feed
 import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
 import io.pcast.module.testConfigModule
@@ -387,6 +389,77 @@ internal class FeedRouterTest : KoinTest {
 
             assertEquals("User 1 shared feed", feedRepository.findByNanoId(sharedNanoId, ctx.userId).title)
             assertEquals("User 2 shared feed", feedRepository.findByNanoId(sharedNanoId, secondUser.id).title)
+        }
+
+    @Test
+    fun testOpmlExportReturnsAllFeeds() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val feeds = feedRepository.findAll(ctx.userId)
+
+            ctx.client
+                .get("/api/feeds/opml") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+
+                    val opml = body<OpmlFile>()
+                    assertEquals(feeds.size, opml.body.outlines.outlines.size)
+                    assertEquals(
+                        feeds.map { it.url }.toSet(),
+                        opml.body.outlines
+                            .map { it.xmlUrl }
+                            .toSet(),
+                    )
+                }
+        }
+
+    @Test
+    fun testOpmlExportScopedToUser() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            // Second seeded user has no feeds
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            ctx.client
+                .get("/api/feeds/opml") {
+                    bearerAuth(secondUserToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(
+                        0,
+                        body<OpmlFile>()
+                            .body.outlines.outlines.size,
+                    )
+                }
+        }
+
+    @Test
+    fun testOpmlRoundTrip() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            // Export user 1's feeds, then import them for user 2
+            val exported =
+                ctx.client
+                    .get("/api/feeds/opml") { bearerAuth(ctx.accessToken) }
+                    .bodyAsText()
+
+            ctx.client
+                .post("/api/feeds/opml") {
+                    bearerAuth(secondUserToken)
+                    header(HttpHeaders.ContentType, ContentType.Application.Xml.toString())
+                    setBody(exported)
+                }.expect {
+                    assertEquals(HttpStatusCode.Created, status)
+                }
+
+            val secondUser = authService.getUserByEmail(TEST_EMAIL_2)!!
+            assertEquals(
+                feedRepository.findAll(ctx.userId).map { it.url }.toSet(),
+                feedRepository.findAll(secondUser.id).map { it.url }.toSet(),
+            )
         }
 
     @Test

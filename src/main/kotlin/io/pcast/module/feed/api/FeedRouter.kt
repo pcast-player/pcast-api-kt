@@ -1,10 +1,12 @@
 package io.pcast.module.feed.api
 
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -18,6 +20,7 @@ import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import nl.adaptivity.xmlutil.serialization.XML
 import org.koin.ktor.ext.inject
 
@@ -78,6 +81,13 @@ fun Route.registerFeedRoutes() {
         service.deleteFeed(id, userId)
 
         call.respond(HttpStatusCode.NoContent)
+    }
+
+    get("/feeds/opml") {
+        val userId = call.userId()
+        val opml = service.exportOpml(userId)
+
+        call.respondText(OPML_XML.encodeToString(opml), ContentType.Application.Xml, HttpStatusCode.OK)
     }
 
     post("/feeds/opml") {

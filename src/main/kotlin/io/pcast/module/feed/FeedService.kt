@@ -37,6 +37,8 @@ class FeedService(
         userId: UUID,
     ): Feed = repository.findByNanoId(nanoId, userId)
 
+    fun exportOpml(userId: UUID): OpmlFile = OpmlFile.fromFeeds(repository.findAll(userId))
+
     fun addFeed(
         request: FeedRequest,
         userId: UUID,
