@@ -15,6 +15,8 @@ sealed class HttpError(
 
     data object Unauthorized : HttpError(statusCode = HttpStatusCode.Unauthorized)
 
+    data object Conflict : HttpError(statusCode = HttpStatusCode.Conflict)
+
     data object NotImplemented : HttpError(statusCode = HttpStatusCode.NotImplemented)
 }
 

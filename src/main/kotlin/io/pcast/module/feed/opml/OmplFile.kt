@@ -16,7 +16,40 @@ data class OpmlFile(
     val version: String,
     val head: OpmlHead,
     val body: OpmlBody,
-)
+) {
+    companion object {
+        private const val OPML_VERSION = "2.0"
+        private const val RSS_OUTLINE_TYPE = "rss"
+
+        /**
+         * Builds an OPML 2.0 document from a list of [feeds], nesting each feed as an `rss`
+         * outline under a single "feeds" parent outline (mirrors the import structure).
+         */
+        fun fromFeeds(
+            feeds: List<Feed>,
+            title: String = "pcast subscriptions",
+        ): OpmlFile =
+            OpmlFile(
+                version = OPML_VERSION,
+                head = OpmlHead(title = title),
+                body =
+                    OpmlBody(
+                        outlines =
+                            OpmlOutlines(
+                                text = "feeds",
+                                outlines =
+                                    feeds.map {
+                                        OpmlOutline(
+                                            text = it.title,
+                                            type = RSS_OUTLINE_TYPE,
+                                            xmlUrl = it.url,
+                                        )
+                                    },
+                            ),
+                    ),
+            )
+    }
+}
 
 @Serializable
 @XmlSerialName("head")

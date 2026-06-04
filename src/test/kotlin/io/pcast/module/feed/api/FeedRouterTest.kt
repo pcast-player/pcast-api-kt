@@ -4,12 +4,14 @@ import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -29,6 +31,7 @@ import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.response.TokenResponse
 import io.pcast.module.feed.model.Feed
 import io.pcast.module.feed.model.FeedRepository
+import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
 import io.pcast.module.testConfigModule
@@ -92,6 +95,100 @@ internal class FeedRouterTest : KoinTest {
                     val feeds = body<List<FeedResponse>>()
                     assertEquals(10, feeds.size)
                 }
+        }
+
+    @Test
+    fun testGetFeedsSetsTotalCountHeader() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("10", headers["X-Total-Count"])
+                }
+        }
+
+    @Test
+    fun testGetFeedsFirstPage() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds?page=1&pageSize=4") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("10", headers["X-Total-Count"])
+                    assertEquals(4, body<List<FeedResponse>>().size)
+                }
+        }
+
+    @Test
+    fun testGetFeedsLastPagePartial() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .get("/api/feeds?page=3&pageSize=4") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(2, body<List<FeedResponse>>().size)
+                }
+        }
+
+    @Test
+    fun testGetFeedsPagesDoNotOverlap() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            val page1 =
+                ctx.client
+                    .get("/api/feeds?page=1&pageSize=4") { bearerAuth(ctx.accessToken) }
+                    .body<List<FeedResponse>>()
+                    .map { it.nanoId }
+            val page2 =
+                ctx.client
+                    .get("/api/feeds?page=2&pageSize=4") { bearerAuth(ctx.accessToken) }
+                    .body<List<FeedResponse>>()
+                    .map { it.nanoId }
+
+            assertEquals(emptyList(), page1.intersect(page2.toSet()).toList())
+        }
+
+    @Test
+    fun testGetFeedsEmptyReturnsOkWithEmptyArray() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            // Second seeded user has no feeds
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            ctx.client
+                .get("/api/feeds") {
+                    bearerAuth(secondUserToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals("0", headers["X-Total-Count"])
+                    assertEquals(emptyList(), body<List<FeedResponse>>())
+                }
+        }
+
+    @Test
+    fun testGetFeedsRejectsInvalidPagination() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            for (query in listOf("page=0", "pageSize=0", "page=abc", "pageSize=99999")) {
+                ctx.client
+                    .get("/api/feeds?$query") {
+                        bearerAuth(ctx.accessToken)
+                    }.expect {
+                        assertEquals(HttpStatusCode.BadRequest, status, "expected 400 for ?$query")
+                    }
+            }
         }
 
     @Test
@@ -228,6 +325,59 @@ internal class FeedRouterTest : KoinTest {
         }
 
     @Test
+    fun testDeleteFeed() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val feed = feedRepository.findAll(ctx.userId).first()
+
+            ctx.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NoContent, status)
+                }
+
+            ctx.client
+                .get("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
+    fun testDeleteFeedFailsWithUnknownId() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .delete("/api/feeds/does-not-exist") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
+    fun testUserCannotDeleteOtherUsersFeed() =
+        testApplication {
+            val ctx1 = configureServerAndGetContext()
+            val ctx2 = loginSecondUser(ctx1.client)
+
+            val feed = feedRepository.findAll(ctx1.userId).first()
+
+            ctx1.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx2)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+
+            // ctx1's feed must still exist
+            assertEquals(feed.title, feedRepository.findByNanoId(feed.nanoId, ctx1.userId).title)
+        }
+
+    @Test
     fun testDifferentUsersCanHaveSameNanoId() =
         testApplication {
             val ctx = configureServerAndGetContext()
@@ -239,6 +389,77 @@ internal class FeedRouterTest : KoinTest {
 
             assertEquals("User 1 shared feed", feedRepository.findByNanoId(sharedNanoId, ctx.userId).title)
             assertEquals("User 2 shared feed", feedRepository.findByNanoId(sharedNanoId, secondUser.id).title)
+        }
+
+    @Test
+    fun testOpmlExportReturnsAllFeeds() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val feeds = feedRepository.findAll(ctx.userId)
+
+            ctx.client
+                .get("/api/feeds/opml") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+
+                    val opml = body<OpmlFile>()
+                    assertEquals(feeds.size, opml.body.outlines.outlines.size)
+                    assertEquals(
+                        feeds.map { it.url }.toSet(),
+                        opml.body.outlines
+                            .map { it.xmlUrl }
+                            .toSet(),
+                    )
+                }
+        }
+
+    @Test
+    fun testOpmlExportScopedToUser() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            // Second seeded user has no feeds
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            ctx.client
+                .get("/api/feeds/opml") {
+                    bearerAuth(secondUserToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertEquals(
+                        0,
+                        body<OpmlFile>()
+                            .body.outlines.outlines.size,
+                    )
+                }
+        }
+
+    @Test
+    fun testOpmlRoundTrip() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val secondUserToken = loginSecondUser(ctx.client)
+
+            // Export user 1's feeds, then import them for user 2
+            val exported =
+                ctx.client
+                    .get("/api/feeds/opml") { bearerAuth(ctx.accessToken) }
+                    .bodyAsText()
+
+            ctx.client
+                .post("/api/feeds/opml") {
+                    bearerAuth(secondUserToken)
+                    header(HttpHeaders.ContentType, ContentType.Application.Xml.toString())
+                    setBody(exported)
+                }.expect {
+                    assertEquals(HttpStatusCode.Created, status)
+                }
+
+            val secondUser = authService.getUserByEmail(TEST_EMAIL_2)!!
+            assertEquals(
+                feedRepository.findAll(ctx.userId).map { it.url }.toSet(),
+                feedRepository.findAll(secondUser.id).map { it.url }.toSet(),
+            )
         }
 
     @Test

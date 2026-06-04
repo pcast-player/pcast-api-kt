@@ -66,7 +66,35 @@ class FeedRepository(
             FeedsTable
                 .selectAll()
                 .where { FeedsTable.userId eq ownerId }
+                .orderBy(FeedsTable.id)
                 .map(::mapRow)
+        }
+
+    /**
+     * Returns a single page of feeds owned by [ownerId], ordered by id (UUIDv7, i.e. creation
+     * order) for stable pagination.
+     */
+    fun findPage(
+        ownerId: UUID,
+        limit: Int,
+        offset: Int,
+    ): List<Feed> =
+        transaction(db) {
+            FeedsTable
+                .selectAll()
+                .where { FeedsTable.userId eq ownerId }
+                .orderBy(FeedsTable.id)
+                .limit(limit)
+                .offset(offset.toLong())
+                .map(::mapRow)
+        }
+
+    fun count(ownerId: UUID): Long =
+        transaction(db) {
+            FeedsTable
+                .selectAll()
+                .where { FeedsTable.userId eq ownerId }
+                .count()
         }
 
     fun find(
@@ -101,6 +129,20 @@ class FeedRepository(
             FeedsTable.deleteWhere { (FeedsTable.id eq id) and (FeedsTable.userId eq ownerId) }
         }
     }
+
+    /**
+     * Deletes a feed identified by [nanoId] and owned by [ownerId]. Returns true if a row was
+     * deleted, false (caller should surface as 404) if the nanoId is not owned by this user.
+     */
+    fun deleteByNanoId(
+        nanoId: String,
+        ownerId: UUID,
+    ): Boolean =
+        transaction(db) {
+            FeedsTable.deleteWhere {
+                (FeedsTable.nanoId eq nanoId) and (FeedsTable.userId eq ownerId)
+            } > 0
+        }
 
     private fun mapRow(row: ResultRow) =
         Feed(
