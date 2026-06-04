@@ -4,6 +4,7 @@ import com.fasterxml.uuid.Generators
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -225,6 +226,59 @@ internal class FeedRouterTest : KoinTest {
                 }.expect {
                     assertEquals(HttpStatusCode.NotFound, status)
                 }
+        }
+
+    @Test
+    fun testDeleteFeed() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+            val feed = feedRepository.findAll(ctx.userId).first()
+
+            ctx.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NoContent, status)
+                }
+
+            ctx.client
+                .get("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
+    fun testDeleteFeedFailsWithUnknownId() =
+        testApplication {
+            val ctx = configureServerAndGetContext()
+
+            ctx.client
+                .delete("/api/feeds/does-not-exist") {
+                    bearerAuth(ctx.accessToken)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+        }
+
+    @Test
+    fun testUserCannotDeleteOtherUsersFeed() =
+        testApplication {
+            val ctx1 = configureServerAndGetContext()
+            val ctx2 = loginSecondUser(ctx1.client)
+
+            val feed = feedRepository.findAll(ctx1.userId).first()
+
+            ctx1.client
+                .delete("/api/feeds/${feed.nanoId}") {
+                    bearerAuth(ctx2)
+                }.expect {
+                    assertEquals(HttpStatusCode.NotFound, status)
+                }
+
+            // ctx1's feed must still exist
+            assertEquals(feed.title, feedRepository.findByNanoId(feed.nanoId, ctx1.userId).title)
         }
 
     @Test

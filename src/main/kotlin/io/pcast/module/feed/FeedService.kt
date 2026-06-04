@@ -50,4 +50,12 @@ class FeedService(
         val updated = repository.update(feed, ownerId = userId)
         if (!updated) throw AbortError(HttpError.NotFound, "No feed found")
     }
+
+    fun deleteFeed(
+        nanoId: String,
+        userId: UUID,
+    ) {
+        val deleted = repository.deleteByNanoId(nanoId, ownerId = userId)
+        if (!deleted) throw AbortError(HttpError.NotFound, "No feed found")
+    }
 }
