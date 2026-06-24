@@ -5,6 +5,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
@@ -15,6 +16,7 @@ import io.pcast.module.feed.FeedService
 import io.pcast.module.feed.opml.OpmlFile
 import io.pcast.module.feed.request.FeedRequest
 import io.pcast.module.feed.response.FeedResponse
+import io.pcast.module.feed.response.FeedSyncResponse
 import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.serialization.XML
 import org.koin.ktor.ext.inject
@@ -34,11 +36,7 @@ fun Route.registerFeedRoutes() {
         val userId = call.userId()
         val feeds = service.getFeeds(userId)
 
-        if (feeds.isNotEmpty()) {
-            call.respond(feeds.map(::FeedResponse))
-        } else {
-            throw AbortError(HttpError.NoContent, "No feeds found.")
-        }
+        call.respond(feeds.map(::FeedResponse))
     }
 
     post("/feeds") {
@@ -65,6 +63,22 @@ fun Route.registerFeedRoutes() {
         service.updateFeed(id, request, userId)
 
         call.respond(HttpStatusCode.NoContent)
+    }
+
+    delete("/feeds/{id}") {
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
+        val userId = call.userId()
+
+        service.deleteFeed(id, userId)
+
+        call.respond(HttpStatusCode.NoContent)
+    }
+
+    post("/feeds/{id}/sync") {
+        val id = call.parameters["id"] ?: throw AbortError(HttpError.BadRequest, "Feed ID must be provided")
+        val userId = call.userId()
+
+        call.respond(FeedSyncResponse(service.syncFeed(id, userId)))
     }
 
     post("/feeds/opml") {

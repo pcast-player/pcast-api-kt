@@ -28,6 +28,8 @@ object PasskeyChallengesTable : UUIDTable("passkey_challenges") {
     val type = varchar("type", CHALLENGE_TYPE_MAX_LENGTH)
     val challenge = varchar("challenge", CHALLENGE_MAX_LENGTH).uniqueIndex()
     val requestJson = text("request_json")
+    val email = varchar("email", 255).nullable()
+    val passkeyUserHandle = varchar("passkey_user_handle", 86).nullable()
     val expiresAt = datetime("expires_at")
     val consumedAt = datetime("consumed_at").nullable()
     val createdAt = datetime("created_at")
@@ -43,6 +45,8 @@ class PasskeyChallengeRepository(
         challenge: String,
         requestJson: String,
         expiresAt: LocalDateTime,
+        email: String? = null,
+        passkeyUserHandle: String? = null,
     ): PasskeyChallenge {
         val pending =
             PasskeyChallenge(
@@ -51,6 +55,8 @@ class PasskeyChallengeRepository(
                 type = type,
                 challenge = challenge,
                 requestJson = requestJson,
+                email = email,
+                passkeyUserHandle = passkeyUserHandle,
                 expiresAt = expiresAt,
                 consumedAt = null,
                 createdAt = LocalDateTime.now(),
@@ -65,6 +71,8 @@ class PasskeyChallengeRepository(
                 it[PasskeyChallengesTable.type] = pending.type.name
                 it[PasskeyChallengesTable.challenge] = pending.challenge
                 it[PasskeyChallengesTable.requestJson] = pending.requestJson
+                it[PasskeyChallengesTable.email] = pending.email
+                it[PasskeyChallengesTable.passkeyUserHandle] = pending.passkeyUserHandle
                 it[PasskeyChallengesTable.expiresAt] = pending.expiresAt
                 it[consumedAt] = pending.consumedAt
                 it[createdAt] = pending.createdAt
@@ -110,6 +118,8 @@ class PasskeyChallengeRepository(
             type = PasskeyChallengeType.valueOf(row[PasskeyChallengesTable.type]),
             challenge = row[PasskeyChallengesTable.challenge],
             requestJson = row[PasskeyChallengesTable.requestJson],
+            email = row[PasskeyChallengesTable.email],
+            passkeyUserHandle = row[PasskeyChallengesTable.passkeyUserHandle],
             expiresAt = row[PasskeyChallengesTable.expiresAt],
             consumedAt = row[PasskeyChallengesTable.consumedAt],
             createdAt = row[PasskeyChallengesTable.createdAt],

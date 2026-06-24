@@ -94,6 +94,32 @@ class PasskeyService(
         return request.toCredentialsCreateJson()
     }
 
+    fun startSignupRegistration(email: String): String {
+        val normalizedEmail = email.trim().lowercase()
+        if (userRepository.findByEmail(normalizedEmail) != null) {
+            throw AbortError(HttpError.Conflict, "User already exists")
+        }
+
+        val passkeyUserHandle = userRepository.generateUserHandle()
+        val request =
+            startRegistrationRequest(
+                email = normalizedEmail,
+                passkeyUserHandle = passkeyUserHandle,
+            )
+
+        challengeRepository.create(
+            userId = null,
+            type = PasskeyChallengeType.SignupRegistration,
+            challenge = request.challenge.base64Url,
+            requestJson = request.toJson(),
+            expiresAt = LocalDateTime.now().plusSeconds(config.passkey.challengeTtlSeconds),
+            email = normalizedEmail,
+            passkeyUserHandle = passkeyUserHandle,
+        )
+
+        return request.toCredentialsCreateJson()
+    }
+
     fun finishRegistration(
         userId: UUID,
         responseJson: String,
@@ -116,6 +142,39 @@ class PasskeyService(
             backupEligible = result.isBackupEligible,
             backedUp = result.isBackedUp,
         )
+    }
+
+    fun finishSignupRegistration(responseJson: String): TokenResponse {
+        val response = parseRegistrationResponse(responseJson)
+        val challenge =
+            consumeChallenge(response.response.clientData.challenge.base64Url, PasskeyChallengeType.SignupRegistration)
+        val email =
+            challenge.email ?: throw AbortError(HttpError.Unauthorized, "Passkey challenge expired or already used")
+        val passkeyUserHandle =
+            challenge.passkeyUserHandle ?: throw AbortError(
+                HttpError.Unauthorized,
+                "Passkey challenge expired or already used",
+            )
+
+        if (userRepository.findByEmail(email) != null) {
+            throw AbortError(HttpError.Conflict, "User already exists")
+        }
+
+        val result = finishRegistrationOrAbort(challenge.requestJson, response)
+        val user = userRepository.createPasskeyOnly(email, passkeyUserHandle)
+
+        credentialRepository.create(
+            userId = user.id,
+            credentialId = result.keyId.id.base64Url,
+            publicKeyCose = result.publicKeyCose.base64Url,
+            signatureCount = result.signatureCount,
+            transports = response.response.transports.joinToString(",") { it.id },
+            nickname = null,
+            backupEligible = result.isBackupEligible,
+            backedUp = result.isBackedUp,
+        )
+
+        return authService.issueTokenPair(user)
     }
 
     fun startAuthentication(email: String?): String {
@@ -179,6 +238,30 @@ class PasskeyService(
     private fun parseRegistrationResponse(responseJson: String) =
         runCatching { PublicKeyCredential.parseRegistrationResponseJson(responseJson) }
             .getOrElse { throw AbortError(HttpError.BadRequest, "Invalid passkey registration response", it) }
+
+    private fun startRegistrationRequest(
+        email: String,
+        passkeyUserHandle: String,
+    ): PublicKeyCredentialCreationOptions =
+        relyingParty.startRegistration(
+            StartRegistrationOptions
+                .builder()
+                .user(
+                    UserIdentity
+                        .builder()
+                        .name(email)
+                        .displayName(email)
+                        .id(ByteArray.fromBase64Url(passkeyUserHandle))
+                        .build(),
+                ).authenticatorSelection(
+                    AuthenticatorSelectionCriteria
+                        .builder()
+                        .residentKey(ResidentKeyRequirement.REQUIRED)
+                        .userVerification(UserVerificationRequirement.REQUIRED)
+                        .build(),
+                ).timeout(config.passkey.timeoutMillis)
+                .build(),
+        )
 
     private fun parseAssertionResponse(responseJson: String) =
         runCatching { PublicKeyCredential.parseAssertionResponseJson(responseJson) }

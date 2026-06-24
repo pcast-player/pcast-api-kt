@@ -21,6 +21,7 @@ import io.ktor.server.testing.testApplication
 import io.pcast.module.AppModule
 import io.pcast.module.auth.AuthService
 import io.pcast.module.auth.passkey.request.PasskeyAuthenticationOptionsRequest
+import io.pcast.module.auth.passkey.request.PasskeySignupOptionsRequest
 import io.pcast.module.auth.passkey.response.PasskeyCredentialResponse
 import io.pcast.module.auth.request.LoginRequest
 import io.pcast.module.auth.request.RefreshRequest
@@ -237,6 +238,49 @@ internal class AuthRouterTest : KoinTest {
                 }.expect {
                     assertEquals(HttpStatusCode.OK, status)
                     assertTrue(bodyAsText().contains("\"publicKey\""))
+                }
+        }
+
+    @Test
+    fun testPasskeySignupOptionsSuccess() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/signup/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(PasskeySignupOptionsRequest(" NewUser@Example.com "))
+                }.expect {
+                    assertEquals(HttpStatusCode.OK, status)
+                    assertTrue(bodyAsText().contains("\"publicKey\""))
+                }
+        }
+
+    @Test
+    fun testPasskeySignupOptionsRejectsExistingUser() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/signup/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(PasskeySignupOptionsRequest(" TEST@example.com "))
+                }.expect {
+                    assertEquals(HttpStatusCode.Conflict, status)
+                }
+        }
+
+    @Test
+    fun testPasskeySignupOptionsRejectsInvalidEmail() =
+        testApplication {
+            val client = configureServerAndGetClient()
+
+            client
+                .post("/api/auth/passkeys/signup/options") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody(PasskeySignupOptionsRequest("invalid-email"))
+                }.expect {
+                    assertEquals(HttpStatusCode.BadRequest, status)
                 }
         }
 
